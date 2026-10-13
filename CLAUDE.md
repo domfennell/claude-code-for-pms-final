@@ -121,6 +121,10 @@ gives room.
 
 ### Session findings (Module 3)
 
+- Note: this work was actually done on Thursday 8 October; the wrap-up
+  that saved it didn't happen until the next session, on 13 October. If
+  dates in this file look off by a few days against when something was
+  figured out, that's why.
 - Root cause found, in the code: `history.py` scores a missed ping
   identically to a deliberate decline, with no decay back to neutral
   (`config.py`, `routing.py` in 00-rook/code/dispatch-routing). The 60s
