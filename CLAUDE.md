@@ -147,3 +147,41 @@ gives room.
   gap from Module 2 is still unresolved.
 - Next: pull the aggregate acceptance rate, then draft the full write-up
   for the engineering manager and Director of Product.
+
+### Session findings (Module 4)
+
+- There is no `00-rook/data/callout-history.csv` and no such file exists
+  anywhere in this folder or the wiki — the real source for ping-level
+  detail is the `rook-database` `pings` table, queried directly.
+- Company-wide ping-level acceptance rate: 77% before 4.2 → 54% the week
+  it shipped → recovered to 73% by late August. This number alone is
+  misleading: the recovery is the same mechanism redistributing work to
+  already-strong responders, not a fix. Callout-level fulfillment shows
+  the same shape (93–97% → 86–87% → 94.5%), and "never fulfilled"
+  callouts roughly doubled (4–12/week baseline → 14–17/week) for three
+  weeks.
+- True time-to-accept (the glossary's second official metric) cannot be
+  computed from this data — no accept timestamp exists, only ping-sent
+  time and outcome.
+- Checked all 16 areas, not just the 4 worst-hit: home-turf dominance
+  dropped in 13 of 16. Ironvale, Stormwrack, and Sgt. Falkirk lose 14–21
+  points of home-area share despite growing in raw volume — a
+  previously unflagged second-tier effect.
+- 4.2 raised the proximity weight (meant to help nearby responders win
+  more), yet home-turf dominance fell almost everywhere. Conclusion: the
+  acceptance-score bug is strong enough to override an increased
+  proximity advantage. The feature responders asked for isn't delivering
+  its intended benefit for the people it should help most. Caveat:
+  `availability.travel_time_minutes()` is a stub with no real data, so
+  this is a confident read of the code's structure, not a recomputed
+  score.
+- Drafted the full write-up for the Director of Product and Engineering
+  Manager at `00-rook/feedback/4.2-writeup-for-eng-and-product.md`. Covers
+  the mechanism, the one number, the area-level check, and open asks.
+- Started (then paused) a structured "interview me" intake process for a
+  separate deliverable: a scheduled update to the Director of Product.
+  Confirmed so far: decision = what to say in that update. Still open:
+  who else attends, what the user already believes, format, scope. Pick
+  this back up before drafting that specific output.
+- Next: resume the paused interview intake if that update is still
+  needed; otherwise keep refining the main write-up doc.
