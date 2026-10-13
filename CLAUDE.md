@@ -118,3 +118,28 @@ gives room.
 - Ranking logic has no written description. The staff engineer owns it.
 - Handler phone app and Shared cover between responders are Q4, still
   exploring. Requisition approval chains is 4.3 and belongs to Rook Supply.
+
+### Session findings (Module 3)
+
+- Root cause found, in the code: `history.py` scores a missed ping
+  identically to a deliberate decline, with no decay back to neutral
+  (`config.py`, `routing.py` in 00-rook/code/dispatch-routing). The 60s
+  timeout generates more misses, which get penalized like refusals, which
+  lowers ranking, which means fewer pings and no way to recover — a
+  compounding bug, not just a tuning trade-off.
+- Confirmed in the data: before 4.2, Vesper, The Undertow, and Farlight
+  won nearly every callout in their own home area; after 4.2 they lose
+  nearly all of them, even on their own turf. Rules out "they just have
+  weaker proximity" as the explanation.
+- Customer interviews (4) and all 147 support tickets both independently
+  describe this. Tickets widen it to at least 6 affected responders
+  (adding Corporal Ashgrove and Halfmoon), and confirm handlers already
+  ruled out an availability-settings explanation.
+- The ticket count still understates the problem: 3 of the 4 interviewed
+  handlers (Dot, Kip, Halloran) never filed a ticket about what they
+  raised verbally, so tickets are a floor, not the full picture.
+- Still open: the company-wide acceptance-rate number hasn't been pulled
+  (only responder-level detail so far), and the Availability Confidence
+  gap from Module 2 is still unresolved.
+- Next: pull the aggregate acceptance rate, then draft the full write-up
+  for the engineering manager and Director of Product.
