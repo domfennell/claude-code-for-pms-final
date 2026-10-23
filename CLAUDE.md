@@ -201,7 +201,8 @@ gives room.
   research, early Sept) for Aunt Dot, Kip, Halloran, and Mr. Ambrose —
   worth reading before assuming what a handler wants; Dot's and Kip's
   actual asks didn't match the first drafted design.
-- Built `05-super-speed/dot-and-vesper-mock.html`: a prototype that
+- Built `05-super-speed/prototype.html` (brief at
+  `05-super-speed/brief.md`): a prototype that
   simulates the old vs. new scoring rule against real ping history,
   switchable across Vesper, The Undertow, Farlight, and Nightwell
   (used as a stress-test control case — she dipped but recovered on

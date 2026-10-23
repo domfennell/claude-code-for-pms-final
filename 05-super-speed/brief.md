@@ -40,7 +40,7 @@ Dot also gets a quiet notice the moment a ping goes out for Vesper — not just 
 
 This is two separate things happening together: a one-time catch-up that fixes Vesper's score right now, and an ongoing change so future misses fade instead of sticking. Both show up in the click-through, labeled separately.
 
-*(Click-through: `dot-and-vesper-mock.html`)*
+*(Click-through: `prototype.html`)*
 
 ## 6. The numbers
 
