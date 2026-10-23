@@ -1,0 +1,419 @@
+<title>4.2 case file</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Archivo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#1859b5; --panel:#ffffff; --ink:#0a1f44; --ink2:#1a2f54; --body-text:#111318;
+  --yellow:#ffd400; --orange:#ff6a00; --green:#0c9a53; --red:#d81e1e; --amber:#e08a00;
+  --muted:#5b6474; --dot: rgba(10,31,68,0.16); --shadow: var(--ink);
+  --chip-bg:#f1f1ef;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#07142e; --panel:#15181f; --ink:#ffd400; --ink2:#ff6a00; --body-text:#f3f1e7;
+    --yellow:#ffd400; --orange:#ff6a00; --green:#36d08a; --red:#ff5a5a; --amber:#ffb43d;
+    --muted:#aeb3bf; --dot: rgba(255,212,0,0.14); --shadow:#000000;
+    --chip-bg:#1f232c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#07142e; --panel:#15181f; --ink:#ffd400; --ink2:#ff6a00; --body-text:#f3f1e7;
+  --yellow:#ffd400; --orange:#ff6a00; --green:#36d08a; --red:#ff5a5a; --amber:#ffb43d;
+  --muted:#aeb3bf; --dot: rgba(255,212,0,0.14); --shadow:#000000;
+  --chip-bg:#1f232c;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--page); color:var(--body-text);
+  font-family:"Archivo",-apple-system,sans-serif;
+  padding:1.5rem 1rem 3rem;
+  background-image: radial-gradient(circle, var(--dot) 1.6px, transparent 1.6px);
+  background-size: 14px 14px;
+}
+.wrap{max-width:820px;margin:0 auto;}
+h1,h2,.comic{font-family:"Bangers",cursive; letter-spacing:.5px;}
+h1{font-size:34px;color:#fff;text-shadow:3px 3px 0 var(--ink);margin:0 0 .25rem;line-height:1.1;}
+h1 small{display:block;font-family:"Archivo";font-size:14px;font-weight:700;color:var(--yellow);letter-spacing:1px;text-shadow:none;margin-top:6px;}
+h2{font-size:24px;color:#fff;text-shadow:2px 2px 0 var(--ink);margin:2.5rem 0 1rem;}
+.panel{
+  background:var(--panel); border:3px solid var(--ink); border-radius:14px;
+  box-shadow:7px 7px 0 var(--shadow); padding:1.1rem 1.25rem; margin-bottom:1rem;
+}
+.sub{color:#fff; opacity:.92; font-size:14px; max-width:600px; margin:0 0 1.5rem;}
+.bursts{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px;}
+.burst{
+  background:var(--panel); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:6px 6px 0 var(--shadow); padding:1rem; text-align:center; position:relative; overflow:hidden;
+}
+.burst::before{
+  content:""; position:absolute; inset:0; opacity:.5;
+  background-image: radial-gradient(circle, var(--dot) 2px, transparent 2px);
+  background-size:9px 9px; pointer-events:none;
+}
+.burst .lab{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); position:relative;}
+.burst .arrow{font-family:"Bangers"; font-size:30px; color:var(--orange); margin:2px 0; position:relative;}
+.burst .before{font-size:13px; color:var(--muted); position:relative;}
+.burst .after{font-family:"Bangers"; font-size:32px; color:var(--red); position:relative;}
+.tag{display:inline-block; font-size:10px; font-weight:700; background:var(--yellow); color:#1a1a1a; padding:2px 7px; border-radius:999px; border:1.5px solid var(--ink); margin-top:4px; position:relative;}
+
+.steps{display:flex; flex-direction:column; gap:10px;}
+.step{
+  background:var(--panel); border:3px solid var(--ink); border-radius:12px;
+  box-shadow:4px 4px 0 var(--shadow); padding:.75rem .9rem; cursor:pointer; transition:transform .12s;
+}
+.step:hover{transform:translate(-1px,-1px); box-shadow:5px 5px 0 var(--shadow);}
+.step .num{font-family:"Bangers"; font-size:20px; color:var(--orange); margin-right:8px;}
+.step .line{font-size:14px; font-weight:700;}
+.step .file{font-size:11px; color:var(--muted); font-family:monospace; margin-top:2px;}
+.step .detail{display:none; font-size:13px; margin-top:8px; padding-top:8px; border-top:2px dashed var(--muted); color:var(--muted);}
+.step.open .detail{display:block;}
+.step.stuck-on.stuck{border-color:var(--red); box-shadow:4px 4px 0 var(--red); background:var(--chip-bg);}
+.step.stuck-on.stuck .num{color:var(--red);}
+.switch-row{display:flex; align-items:center; gap:10px; margin-bottom:1rem; color:#fff; font-size:13px; font-weight:700;}
+.switch{position:relative; width:46px; height:26px; background:var(--muted); border-radius:14px; cursor:pointer; flex:none; border:2px solid var(--ink);}
+.switch .knob{position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .15s;}
+.switch.on{background:var(--red);}
+.switch.on .knob{transform:translateX(18px);}
+
+table.score{width:100%; border-collapse:collapse; font-size:13px;}
+table.score th{text-align:left; font-size:11px; text-transform:uppercase; color:var(--muted); padding:6px 6px; border-bottom:2px solid var(--ink);}
+table.score td{padding:9px 6px; border-bottom:1.5px solid var(--chip-bg); vertical-align:middle;}
+.stamp{display:inline-block; font-family:"Bangers"; font-size:14px; padding:3px 10px; border-radius:6px; border:2px solid; transform:rotate(-4deg);}
+.stamp.built{color:var(--green); border-color:var(--green);}
+.stamp.notbuilt{color:var(--red); border-color:var(--red);}
+.stamp.worked{color:var(--green); border-color:var(--green);}
+.stamp.didnot{color:var(--red); border-color:var(--red);}
+.stamp.na{color:var(--muted); border-color:var(--muted);}
+.ev{font-size:12px; color:var(--muted); display:block; margin-top:4px;}
+
+.filters{display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;}
+.filters button{font-family:"Archivo"; font-weight:700; font-size:12px; border:2.5px solid var(--ink); background:var(--panel); color:var(--body-text); padding:6px 12px; border-radius:999px; cursor:pointer;}
+.filters button.active{background:var(--yellow); color:#1a1a1a;}
+.villains{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px;}
+.villain{background:var(--panel); border:3px solid var(--ink); border-radius:12px; box-shadow:5px 5px 0 var(--shadow); padding:.9rem;}
+.villain h3{font-family:"Bangers"; font-size:17px; margin:0 0 4px; color:var(--red);}
+.sev{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; margin-bottom:6px;}
+.sev.critical{background:var(--red); color:#fff;}
+.sev.moderate{background:var(--amber); color:#1a1a1a;}
+.sev.minor{background:var(--yellow); color:#1a1a1a;}
+.villain .file{font-family:monospace; font-size:11px; color:var(--muted); margin-bottom:6px;}
+.villain p{font-size:13px; margin:0;}
+
+.lab-controls{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin:1rem 0;}
+.ctrl label{font-size:12px; font-weight:700; display:flex; justify-content:space-between;}
+.ctrl input[type=range]{width:100%;}
+.ctrl .val{color:var(--orange); font-family:monospace;}
+select{font-family:"Archivo"; font-weight:700; font-size:14px; padding:8px 10px; border:2.5px solid var(--ink); border-radius:8px; background:var(--panel); color:var(--body-text);}
+.checkbox-row{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; margin-top:.5rem;}
+.legend-row{display:flex; gap:16px; flex-wrap:wrap; font-size:12px; margin:.75rem 0; color:var(--muted);}
+.legend-row span{display:flex; align-items:center; gap:5px;}
+.sw{width:14px; height:4px; border-radius:2px; display:inline-block;}
+.note{font-size:12px; color:var(--muted); margin-top:.5rem;}
+
+ol.checklist{list-style:none; margin:0; padding:0;}
+ol.checklist li{display:flex; gap:10px; padding:.6rem 0; border-bottom:1.5px dashed var(--chip-bg); align-items:flex-start;}
+ol.checklist li input{margin-top:3px; width:18px; height:18px; flex:none; cursor:pointer;}
+ol.checklist li .txt b{display:block; font-size:14px;}
+ol.checklist li .txt .meta{font-size:11px; color:var(--muted); font-family:monospace; margin-top:2px;}
+ol.checklist li.done .txt b{text-decoration:line-through; color:var(--muted);}
+.progress-wrap{display:flex; align-items:center; gap:10px; margin-bottom:1rem;}
+.progress-track{flex:1; height:16px; background:var(--chip-bg); border:2px solid var(--ink); border-radius:999px; overflow:hidden;}
+.progress-fill{height:100%; background:var(--green); width:0%; transition:width .2s;}
+.copybtn{font-family:"Archivo"; font-weight:700; font-size:13px; border:2.5px solid var(--ink); background:var(--yellow); color:#1a1a1a; padding:8px 14px; border-radius:8px; cursor:pointer; margin-top:.5rem;}
+
+ul.loose{font-size:14px; padding-left:1.1rem;}
+ul.loose li{margin-bottom:10px;}
+ul.loose b{color:var(--orange);}
+.foot{color:#fff; opacity:.8; font-size:12px; margin-top:2rem; line-height:1.6;}
+.obs{font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; border:1.5px solid; margin-left:6px;}
+.obs.observed{color:var(--green); border-color:var(--green);}
+.obs.estimate{color:var(--amber); border-color:var(--amber);}
+</style>
+
+<div class="wrap">
+<h1>The 4.2 case file<small>What release 4.2 did to Rook Dispatch's heroes — and who's stuck</small></h1>
+<p class="sub">Built from the pings, support tickets, interviews, and the routing code itself. Every number below is observed from those sources — nothing is invented. Where something is estimated rather than measured, it's labeled.</p>
+
+<div class="bursts">
+  <div class="burst"><div class="lab">Ping acceptance rate</div><div class="before">77%</div><div class="arrow">&#8595;</div><div class="after">54%</div><div class="tag">week 4.2 shipped</div></div>
+  <div class="burst"><div class="lab">4 worst-hit heroes, weekly callouts taken (combined)</div><div class="before">~37/wk</div><div class="arrow">&#8595;</div><div class="after">0/wk</div><div class="tag">3 weeks later</div></div>
+  <div class="burst"><div class="lab">Callouts nobody ever took, per week</div><div class="before">4&ndash;12</div><div class="arrow">&#8595;</div><div class="after">14&ndash;17</div><div class="tag">roughly doubled</div></div>
+  <div class="burst"><div class="lab">Vesper's own neighbourhood, taken by Vesper</div><div class="before">97%</div><div class="arrow">&#8595;</div><div class="after">13%</div><div class="tag">her own turf</div></div>
+</div>
+
+<h2>The mission</h2>
+<p class="sub">From something going wrong, to a hero's phone buzzing. Click any step for the plain-English detail.</p>
+<div class="switch-row"><div class="switch" id="stuckSwitch" onclick="toggleStuck()"><div class="knob"></div></div> Show where the heroes got stuck</div>
+<div class="steps" id="stepsList"></div>
+
+<h2>Asked versus built</h2>
+<p class="sub">What Product asked for, going into 4.2 &mdash; and what the code and the data actually show.</p>
+<div class="panel"><table class="score" id="scoreboard"></table></div>
+
+<h2>The villains</h2>
+<p class="sub">The bugs and design gaps behind what happened, filed by which part of the code they live in.</p>
+<div class="filters" id="villainFilters"></div>
+<div class="villains" id="villainCards"></div>
+
+<h2>The hero health lab</h2>
+<p class="sub">This replays what happened to a hero's score, ping by ping, using the real formula in <code>history.py</code>. The orange line shows what-if rules you set below &mdash; it's a replay of real history under different settings, <b>not a forecast</b> of what will happen next.</p>
+<select id="heroSelect"></select>
+<div class="lab-controls">
+  <div class="ctrl"><label>Miss cost <span class="val" id="vMiss">0.12</span></label><input type="range" id="sMiss" min="0" max="0.30" step="0.01" value="0.12"></div>
+  <div class="ctrl"><label>Refusal cost <span class="val" id="vRef">0.12</span></label><input type="range" id="sRef" min="0" max="0.30" step="0.01" value="0.12"></div>
+  <div class="ctrl"><label>Free misses in a row first <span class="val" id="vGrace">0</span></label><input type="range" id="sGrace" min="0" max="5" step="1" value="0"></div>
+  <div class="ctrl"><label>Daily drift toward neutral <span class="val" id="vDecay">0.000</span></label><input type="range" id="sDecay" min="0" max="0.05" step="0.005" value="0"></div>
+  <div class="ctrl"><label>Lowest allowed score <span class="val" id="vFloor">0.00</span></label><input type="range" id="sFloor" min="0" max="0.5" step="0.01" value="0"></div>
+</div>
+<div class="checkbox-row"><input type="checkbox" id="cAway"> No cost for offers outside their home area</div>
+<div class="legend-row">
+  <span><span class="sw" style="background:var(--ink2)"></span>Today's actual rules <span class="obs observed">observed</span></span>
+  <span><span class="sw" style="background:var(--orange)"></span>Your rules <span class="obs estimate">what-if</span></span>
+  <span><span class="sw" style="background:var(--red)"></span>4.2 ships</span>
+</div>
+<div class="panel"><svg id="labChart" width="100%" viewBox="0 0 680 260" role="img" aria-label="Line chart comparing a hero's acceptance score under today's rules versus adjustable what-if rules, over their real ping history"></svg>
+<div id="stripWrap"></div>
+<div class="note" id="labNote"></div>
+</div>
+
+<h2>Orders for the developer</h2>
+<div class="progress-wrap"><div class="progress-track"><div class="progress-fill" id="progFill"></div></div><span id="progText" style="color:#fff;font-weight:700;font-size:13px;">0 of 6</span></div>
+<div class="panel"><ol class="checklist" id="checklist"></ol><button class="copybtn" onclick="copyChecklist()">Copy as text</button></div>
+
+<h2>Loose ends</h2>
+<div class="panel">
+<ul class="loose">
+<li><b>Real travel-time data.</b> <code>availability.py</code>'s <code>travel_time_minutes()</code> is a stub with no real data behind it. Ask the staff engineer or engineering manager for the real thing.</li>
+<li><b>Manual override records.</b> A routing override audit log shipped in 4.0 to track when a handler picks someone other than the recommendation, but we only have the original proposal, not the actual August/September entries. Ask engineering for the log.</li>
+<li><b>Whether decay logic exists elsewhere.</b> <code>history.py</code> flags the missing decay as an open question from 2019. Worth asking the staff engineer directly whether something outside this folder already handles it.</li>
+<li><b>Capability tag data.</b> The score has a third input &mdash; capability match &mdash; that isn't exposed anywhere we could check it against these responders.</li>
+<li><b>Anything after 7 September 2026.</b> Every number here stops there. Ask for fresher data before treating this as the current state.</li>
+<li><b>The real, live score.</b> It lives only in memory in the running system. Everything in the health lab above is a replay of the formula against real outcomes, not a reading of the actual stored number.</li>
+</ul>
+</div>
+
+<p class="foot">Sources: Rook wiki (glossary, Q3 roadmap, Releases, 4 customer interviews) &middot; <code>rook-database</code> (<code>pings</code>, <code>callouts</code>, <code>responders</code>, <code>support_tickets</code>) &middot; <code>00-rook/code/dispatch-routing/</code> (<code>config.py</code>, <code>routing.py</code>, <code>offer.py</code>, <code>history.py</code>, <code>availability.py</code>, <code>README.md</code>). Rook Industries is a fictional teaching scenario; no cover identity is treated as a real person.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const STEPS = [
+  ["1","Something happens somewhere &mdash; a callout is created.","outside this folder"],
+  ["2","The system asks: who's marked available right now, nearby, for this kind of job?","availability.py &mdash; available_for()"],
+  ["3","For each of them, it checks how close they are.","availability.py &mdash; travel_time_minutes()"],
+  ["4","It also checks how often they've said yes lately.","history.py &mdash; recent_acceptance()"],
+  ["5","And whether they can actually do this kind of job.","routing.py &mdash; capability_score()"],
+  ["6","The three checks are blended into one score, using fixed importance settings.","routing.py score() &amp; config.py weights"],
+  ["7","Everyone available is sorted, best match first. Nobody is removed from the list here.","routing.py &mdash; rank_for_callout()"],
+  ["8","The job is pushed to the top person's phone.","offer.py &mdash; push_to_device()"],
+  ["9","A clock starts, and the system waits for a tap.","offer.py &mdash; offer_to() / config.py timeout"],
+  ["10","If they say no, or the clock simply runs out, it counts exactly the same way.","offer.py offer_to() &amp; history.py record_declined()"],
+  ["11","That person's \"how often they say yes\" score drops &mdash; and nothing brings it back up on its own.","history.py &mdash; record_declined()"],
+  ["12","The job moves to the next person on the list, and the scoring repeats for them.","offer.py &mdash; dispatch()"]
+];
+const STUCK = [9,10,11];
+const stepsList = document.getElementById('stepsList');
+STEPS.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className = 'step';
+  if (STUCK.includes(i+1)) el.classList.add('stuck');
+  el.innerHTML = `<span class="num">${s[0]}</span><span class="line">${s[1]}</span><div class="file">lives in: ${s[2]}</div><div class="detail">Click again to collapse.</div>`;
+  el.onclick = ()=> el.classList.toggle('open');
+  stepsList.appendChild(el);
+});
+function toggleStuck(){
+  document.getElementById('stuckSwitch').classList.toggle('on');
+  const on = document.getElementById('stuckSwitch').classList.contains('on');
+  document.querySelectorAll('.step.stuck').forEach(el=> el.classList.toggle('stuck-on', on));
+}
+
+const SCOREBOARD = [
+  ["Change to who gets pinged","Weight proximity up, so nearby heroes win more often.","built","didnot","Vesper's own-area share fell 97% &rarr; 13% despite the higher weight &mdash; the acceptance-score bug overrides it."],
+  ["Ping timeout tuning","Shorten the wait before a ping moves on.","built","didnot","Missed pings rose for all 16 responders, not just the ones it meant to help."],
+  ["Availability Confidence","Show a confidence score next to a hero's stated availability.","notbuilt","na","Committed to 4.2 on the Q3 roadmap, absent from the release notes and changelog, no deferral recorded."],
+  ["Console filter persistence","Keep a handler's filters set between sessions.","built","worked","Confirmed by a handler within an hour of release &mdash; though it has reverted unexpectedly at least twice since."],
+  ["Shared cover between responders","Heroes in different areas covering for each other.","notbuilt","na","Still listed as Q4, status Exploring &mdash; never targeted at 4.2."]
+];
+const sb = document.getElementById('scoreboard');
+sb.innerHTML = '<tr><th>Asked for</th><th>Built?</th><th>Worked?</th></tr>' + SCOREBOARD.map(r=>`
+  <tr><td><b>${r[0]}</b><br><span class="ev">${r[1]}</span></td>
+  <td><span class="stamp ${r[2]}">${r[2]==='built'?'BUILT':'NOT BUILT'}</span></td>
+  <td><span class="stamp ${r[3]}">${r[3]==='worked'?'WORKED':r[3]==='didnot'?'DID NOT':'N/A'}</span><span class="ev">${r[4]}</span></td></tr>
+`).join('');
+
+const VILLAINS = [
+  ["The equal penalty","critical","history.py","A missed ping (nobody answered in time) is scored exactly like a deliberate refusal &mdash; same penalty either way."],
+  ["No way back","critical","history.py","The score never drifts back toward neutral on its own. A 2019 code comment asks this exact question and leaves it unresolved: \"leaving it as-is for now.\""],
+  ["The silent exit","critical","offer.py + history.py","Four heroes fell to 0&ndash;1 pings a week with no alert to anyone. Nobody is told when a score crosses the floor."],
+  ["The vanishing travel time","moderate","availability.py","travel_time_minutes() has no real implementation behind it &mdash; it's a stub. Every proximity-based conclusion rests on the formula existing, not on seeing it run."],
+  ["The missing fourth input","minor","routing.py","The glossary lists 4 scored inputs including \"current availability\"; the code only scores 3. Availability is a yes/no filter, not a weighted factor."]
+];
+const files = ['all', ...new Set(VILLAINS.flatMap(v=>v[2].split(' + ')))];
+const filtWrap = document.getElementById('villainFilters');
+files.forEach(f=>{
+  const b = document.createElement('button');
+  b.textContent = f === 'all' ? 'All files' : f;
+  b.dataset.file = f;
+  if (f==='all') b.classList.add('active');
+  b.onclick = ()=>{
+    document.querySelectorAll('#villainFilters button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderVillains(f);
+  };
+  filtWrap.appendChild(b);
+});
+function renderVillains(filter){
+  const box = document.getElementById('villainCards');
+  const list = filter==='all' ? VILLAINS : VILLAINS.filter(v=> v[2].split(' + ').includes(filter));
+  box.innerHTML = list.map(v=>`
+    <div class="villain"><h3>${v[0]}</h3><span class="sev ${v[1]}">${v[1].toUpperCase()}</span>
+    <div class="file">${v[2]}</div><p>${v[3]}</p></div>
+  `).join('');
+}
+renderVillains('all');
+
+const HEROES = {
+"Vesper": [["2026-06-29T00:05","t",0],["2026-06-30T15:05","d",1],["2026-06-30T19:17","t",0],["2026-07-01T13:29","t",0],["2026-07-01T19:25","t",0],["2026-07-01T20:17","t",0],["2026-07-02T08:43","t",0],["2026-07-02T15:38","t",0],["2026-07-03T07:28","t",0],["2026-07-03T14:51","t",0],["2026-07-03T20:11","d",1],["2026-07-04T01:00","t",0],["2026-07-04T14:16","t",0],["2026-07-05T22:04","d",0],["2026-07-06T08:46","t",0],["2026-07-07T02:00","m",1],["2026-07-07T18:39","t",0],["2026-07-07T20:56","t",0],["2026-07-08T17:10","t",0],["2026-07-09T23:00","t",0],["2026-07-11T13:47","t",0],["2026-07-11T14:16","d",1],["2026-07-11T15:03","t",0],["2026-07-11T21:20","t",0],["2026-07-11T21:29","d",1],["2026-07-12T10:55","t",0],["2026-07-12T16:07","t",0],["2026-07-13T02:10","t",0],["2026-07-13T18:24","t",0],["2026-07-13T18:39","t",0],["2026-07-14T19:11","t",0],["2026-07-15T12:08","t",0],["2026-07-15T19:50","t",0],["2026-07-15T19:57","t",0],["2026-07-16T19:02","d",1],["2026-07-16T21:25","t",0],["2026-07-17T17:26","t",0],["2026-07-17T19:27","m",1],["2026-07-17T20:15","t",0],["2026-07-19T13:50","t",0],["2026-07-19T15:58","t",0],["2026-07-19T19:37","t",0],["2026-07-20T09:46","d",1],["2026-07-20T10:13","d",1],["2026-07-20T21:19","t",0],["2026-07-22T01:55","t",0],["2026-07-22T11:20","t",0],["2026-07-22T11:28","t",0],["2026-07-22T16:56","t",0],["2026-07-22T18:22","t",0],["2026-07-23T16:56","t",0],["2026-07-24T01:09","t",0],["2026-07-25T15:50","t",0],["2026-07-25T19:14","d",1],["2026-07-26T01:05","t",0],["2026-07-26T23:08","t",0],["2026-07-27T08:33","t",0],["2026-07-27T20:46","t",0],["2026-07-28T07:21","t",0],["2026-07-28T11:33","t",0],["2026-07-28T14:48","t",0],["2026-07-29T03:31","t",0],["2026-07-30T02:29","m",1],["2026-07-30T07:48","t",0],["2026-07-30T13:24","t",0],["2026-07-30T23:17","t",0],["2026-07-31T11:28","t",0],["2026-07-31T16:59","t",0],["2026-08-01T19:12","d",1],["2026-08-04T06:44","t",0],["2026-08-04T15:09","t",0],["2026-08-04T15:16","t",0],["2026-08-04T18:04","t",0],["2026-08-05T16:50","t",0],["2026-08-05T20:25","t",0],["2026-08-06T05:48","t",0],["2026-08-06T09:43","t",0],["2026-08-06T12:15","d",1],["2026-08-06T17:48","t",0],["2026-08-07T12:57","t",0],["2026-08-07T17:07","t",0],["2026-08-07T17:55","d",1],["2026-08-08T19:51","t",0],["2026-08-10T02:01","t",0],["2026-08-10T13:33","d",0],["2026-08-11T21:00","t",0],["2026-08-13T07:34","m",1],["2026-08-14T02:53","t",0],["2026-08-14T17:10","m",1],["2026-08-15T13:02","t",0],["2026-08-15T15:33","d",1],["2026-08-15T20:58","t",0],["2026-08-16T10:46","m",1],["2026-08-16T14:05","m",1],["2026-08-16T16:03","t",0],["2026-08-17T08:55","t",0],["2026-08-19T18:42","m",0],["2026-08-23T00:10","m",0],["2026-08-23T05:34","d",1],["2026-08-23T20:15","m",1],["2026-08-24T21:40","d",0],["2026-08-26T18:09","m",0],["2026-09-01T11:42","m",0]],
+"The Undertow": [["2026-06-29T05:43","t",0],["2026-06-29T07:26","t",0],["2026-06-29T13:52","d",1],["2026-06-29T14:31","t",0],["2026-06-29T15:17","t",0],["2026-06-29T18:18","d",1],["2026-06-30T08:58","d",1],["2026-07-01T10:44","t",0],["2026-07-01T19:24","t",0],["2026-07-03T17:30","t",0],["2026-07-03T17:45","t",0],["2026-07-04T12:29","t",0],["2026-07-06T16:36","t",0],["2026-07-07T14:17","d",0],["2026-07-07T17:09","t",0],["2026-07-07T17:19","t",0],["2026-07-08T20:07","t",0],["2026-07-08T21:25","t",0],["2026-07-09T02:35","t",0],["2026-07-09T08:37","d",0],["2026-07-09T21:32","t",0],["2026-07-10T07:39","t",0],["2026-07-11T16:10","t",0],["2026-07-13T04:01","t",0],["2026-07-13T20:21","m",1],["2026-07-15T13:04","t",0],["2026-07-15T15:53","t",0],["2026-07-16T17:44","t",0],["2026-07-16T19:56","t",0],["2026-07-16T21:35","t",0],["2026-07-17T17:52","d",1],["2026-07-17T17:55","d",1],["2026-07-17T18:02","t",0],["2026-07-17T18:47","t",0],["2026-07-18T07:43","t",0],["2026-07-20T01:36","d",0],["2026-07-20T06:57","d",0],["2026-07-20T16:20","t",0],["2026-07-20T18:02","t",0],["2026-07-20T18:09","t",0],["2026-07-22T18:23","t",0],["2026-07-22T22:35","t",0],["2026-07-23T15:28","t",0],["2026-07-23T19:02","t",0],["2026-07-25T12:16","t",0],["2026-07-26T00:32","t",0],["2026-07-26T06:17","d",1],["2026-07-26T19:45","t",0],["2026-07-27T08:54","t",0],["2026-07-27T11:16","t",0],["2026-07-28T09:32","t",0],["2026-07-28T17:52","t",0],["2026-07-29T04:04","t",0],["2026-07-29T06:31","t",0],["2026-07-29T16:57","t",0],["2026-07-31T18:22","t",0],["2026-07-31T20:07","d",1],["2026-08-01T08:07","d",1],["2026-08-01T14:05","t",0],["2026-08-01T18:47","t",0],["2026-08-04T10:25","t",0],["2026-08-04T12:43","d",0],["2026-08-05T17:45","t",0],["2026-08-05T18:18","t",0],["2026-08-05T20:54","d",1],["2026-08-06T00:49","t",0],["2026-08-07T04:26","d",1],["2026-08-07T10:29","t",0],["2026-08-07T19:51","t",0],["2026-08-07T22:12","t",0],["2026-08-07T23:13","t",0],["2026-08-08T13:58","t",0],["2026-08-10T18:49","t",0],["2026-08-10T19:45","t",0],["2026-08-11T18:58","d",1],["2026-08-12T09:04","m",1],["2026-08-13T11:24","m",0],["2026-08-13T13:28","t",0],["2026-08-13T15:55","t",0],["2026-08-13T18:44","m",0],["2026-08-14T02:53","m",1],["2026-08-14T10:22","m",1],["2026-08-16T13:46","d",1],["2026-08-17T14:10","d",1],["2026-08-17T19:07","t",0],["2026-08-18T16:18","m",0],["2026-08-21T16:45","m",0],["2026-08-27T23:18","m",0],["2026-09-05T15:17","m",0]],
+"Meteor Mite": [["2026-07-01T08:42","t",0],["2026-07-01T15:00","d",0],["2026-07-02T01:13","t",0],["2026-07-02T05:44","t",0],["2026-07-03T18:22","t",0],["2026-07-04T08:57","d",0],["2026-07-04T11:56","d",1],["2026-07-04T14:47","d",0],["2026-07-04T23:34","t",0],["2026-07-05T12:18","t",0],["2026-07-05T18:17","t",0],["2026-07-06T15:15","t",0],["2026-07-07T11:44","t",0],["2026-07-07T17:17","t",0],["2026-07-07T22:59","t",0],["2026-07-08T08:48","t",0],["2026-07-08T19:44","t",0],["2026-07-10T18:18","d",1],["2026-07-10T18:41","t",0],["2026-07-11T20:30","d",0],["2026-07-12T13:21","t",0],["2026-07-12T18:51","t",0],["2026-07-12T23:59","d",1],["2026-07-13T09:14","t",0],["2026-07-13T10:47","d",0],["2026-07-13T19:20","t",0],["2026-07-14T07:33","d",0],["2026-07-15T12:34","t",0],["2026-07-17T21:01","t",0],["2026-07-19T08:46","t",0],["2026-07-19T09:10","t",0],["2026-07-19T20:59","d",1],["2026-07-19T22:48","d",1],["2026-07-20T16:25","t",0],["2026-07-20T18:21","t",0],["2026-07-23T09:48","m",0],["2026-07-23T10:42","d",0],["2026-07-23T19:32","t",0],["2026-07-23T21:19","t",0],["2026-07-24T12:33","t",0],["2026-07-24T17:16","d",0],["2026-07-24T19:13","d",0],["2026-07-25T09:08","t",0],["2026-07-25T10:36","t",0],["2026-07-27T00:47","t",0],["2026-07-27T16:10","t",0],["2026-07-27T18:13","t",0],["2026-07-28T19:06","t",0],["2026-07-28T19:46","m",0],["2026-07-28T22:30","t",0],["2026-07-30T17:10","t",0],["2026-07-30T18:51","d",1],["2026-07-30T21:25","t",0],["2026-08-01T10:14","t",0],["2026-08-02T15:46","t",0],["2026-08-02T19:12","d",0],["2026-08-03T19:34","t",0],["2026-08-04T20:34","t",0],["2026-08-05T13:47","d",0],["2026-08-05T14:53","t",0],["2026-08-06T01:14","d",1],["2026-08-06T01:21","t",0],["2026-08-06T05:02","d",1],["2026-08-06T16:20","t",0],["2026-08-08T07:54","t",0],["2026-08-08T16:55","t",0],["2026-08-08T20:43","t",0],["2026-08-10T14:03","d",0],["2026-08-10T21:15","t",0],["2026-08-11T06:41","t",0],["2026-08-12T19:04","d",1],["2026-08-13T13:43","m",1],["2026-08-13T15:12","m",0],["2026-08-14T07:26","m",0],["2026-08-15T15:18","t",0],["2026-08-15T19:40","t",0],["2026-08-16T11:16","m",0],["2026-08-18T07:37","d",0],["2026-08-19T17:30","t",0],["2026-08-20T16:41","m",0],["2026-08-22T20:53","m",1],["2026-08-27T20:03","d",1],["2026-08-29T09:15","m",0],["2026-09-05T15:06","m",1]],
+"Farlight": [["2026-06-30T07:37","t",0],["2026-06-30T23:54","d",1],["2026-07-01T08:52","t",0],["2026-07-01T11:27","d",1],["2026-07-01T11:30","d",0],["2026-07-01T20:52","t",0],["2026-07-01T21:17","t",0],["2026-07-01T21:54","t",0],["2026-07-02T08:34","t",0],["2026-07-02T09:03","t",0],["2026-07-03T16:09","t",0],["2026-07-04T00:50","t",0],["2026-07-06T04:25","t",0],["2026-07-07T09:59","t",0],["2026-07-08T00:09","d",0],["2026-07-08T13:49","t",0],["2026-07-09T08:16","t",0],["2026-07-09T18:47","t",0],["2026-07-09T19:41","d",1],["2026-07-09T20:11","d",1],["2026-07-09T21:21","t",0],["2026-07-11T08:46","t",0],["2026-07-11T14:02","t",0],["2026-07-12T15:37","t",0],["2026-07-13T15:31","t",0],["2026-07-13T23:21","m",1],["2026-07-15T05:05","t",0],["2026-07-15T23:26","t",0],["2026-07-16T14:20","t",0],["2026-07-16T19:06","t",0],["2026-07-17T08:15","d",1],["2026-07-18T18:34","d",1],["2026-07-18T19:34","t",0],["2026-07-18T21:17","t",0],["2026-07-18T23:18","t",0],["2026-07-20T10:34","t",0],["2026-07-20T11:31","t",0],["2026-07-21T07:44","t",0],["2026-07-21T10:50","t",0],["2026-07-22T17:27","m",1],["2026-07-22T18:48","t",0],["2026-07-23T21:52","t",0],["2026-07-23T23:30","d",1],["2026-07-24T04:51","t",0],["2026-07-24T13:31","d",0],["2026-07-24T19:37","t",0],["2026-07-25T00:04","t",0],["2026-07-27T12:33","t",0],["2026-07-27T13:19","t",0],["2026-07-28T22:54","d",1],["2026-07-29T17:27","t",0],["2026-07-30T21:50","t",0],["2026-07-31T08:00","t",0],["2026-08-01T01:08","t",0],["2026-08-01T15:48","t",0],["2026-08-01T23:30","d",0],["2026-08-02T09:18","t",0],["2026-08-02T11:00","d",1],["2026-08-02T18:44","t",0],["2026-08-02T20:54","t",0],["2026-08-03T15:44","d",1],["2026-08-04T20:01","t",0],["2026-08-05T05:29","t",0],["2026-08-05T09:45","t",0],["2026-08-05T16:26","t",0],["2026-08-05T19:45","t",0],["2026-08-06T12:20","t",0],["2026-08-07T12:35","d",1],["2026-08-07T18:42","t",0],["2026-08-08T00:21","m",1],["2026-08-08T10:39","t",0],["2026-08-08T20:19","d",1],["2026-08-10T15:38","t",0],["2026-08-10T17:34","t",0],["2026-08-10T21:08","d",1],["2026-08-12T16:36","t",0],["2026-08-12T19:51","m",1],["2026-08-12T20:02","d",1],["2026-08-13T09:45","m",0],["2026-08-13T14:51","m",1],["2026-08-14T16:32","m",0],["2026-08-14T21:22","t",0],["2026-08-19T13:28","m",0],["2026-08-22T11:13","d",0],["2026-08-23T13:51","m",1],["2026-08-28T19:28","m",1]],
+"Nightwell": [["2026-06-30T09:58","t",0],["2026-06-30T15:06","t",0],["2026-06-30T21:08","m",0],["2026-07-01T07:09","t",0],["2026-07-01T15:18","t",0],["2026-07-01T17:40","t",0],["2026-07-01T20:02","t",0],["2026-07-02T01:13","d",1],["2026-07-02T13:36","t",0],["2026-07-03T13:45","t",0],["2026-07-04T11:56","t",0],["2026-07-04T14:16","d",1],["2026-07-05T11:16","t",0],["2026-07-05T14:05","d",1],["2026-07-05T18:56","t",0],["2026-07-06T00:51","t",0],["2026-07-06T10:22","t",0],["2026-07-06T20:00","d",1],["2026-07-07T15:14","d",1],["2026-07-08T15:03","t",0],["2026-07-08T16:31","t",0],["2026-07-08T18:25","d",1],["2026-07-08T18:43","t",0],["2026-07-10T18:18","d",0],["2026-07-11T10:14","t",0],["2026-07-11T14:16","t",0],["2026-07-11T21:30","t",0],["2026-07-12T15:19","t",0],["2026-07-12T23:59","t",0],["2026-07-14T09:04","m",1],["2026-07-14T10:34","t",0],["2026-07-14T13:04","t",0],["2026-07-14T17:34","t",0],["2026-07-14T17:46","t",0],["2026-07-16T09:04","d",1],["2026-07-16T10:48","t",0],["2026-07-16T12:01","t",0],["2026-07-16T17:06","t",0],["2026-07-16T23:08","t",0],["2026-07-17T19:29","t",0],["2026-07-18T17:15","t",0],["2026-07-19T13:38","d",0],["2026-07-19T15:15","t",0],["2026-07-19T20:59","t",0],["2026-07-20T03:56","t",0],["2026-07-20T09:47","t",0],["2026-07-20T18:21","d",1],["2026-07-21T17:08","t",0],["2026-07-21T17:14","t",0],["2026-07-22T09:43","t",0],["2026-07-22T14:54","t",0],["2026-07-22T16:04","t",0],["2026-07-23T13:51","t",0],["2026-07-23T17:57","t",0],["2026-07-23T18:14","d",0],["2026-07-23T18:51","t",0],["2026-07-24T01:07","m",1],["2026-07-24T17:04","d",1],["2026-07-25T09:33","t",0],["2026-07-25T19:15","t",0],["2026-07-27T03:28","t",0],["2026-07-27T16:29","t",0],["2026-07-28T03:50","t",0],["2026-07-29T00:27","d",1],["2026-07-29T18:04","t",0],["2026-07-30T17:12","t",0],["2026-07-31T08:49","d",1],["2026-07-31T15:42","t",0],["2026-07-31T17:03","t",0],["2026-07-31T17:54","d",1],["2026-08-01T10:14","d",1],["2026-08-01T12:43","t",0],["2026-08-01T19:13","t",0],["2026-08-02T16:09","t",0],["2026-08-02T21:52","t",0],["2026-08-03T00:45","t",0],["2026-08-03T01:28","d",1],["2026-08-03T15:56","t",0],["2026-08-03T17:10","t",0],["2026-08-05T13:47","d",1],["2026-08-05T19:54","t",0],["2026-08-06T05:02","t",0],["2026-08-06T12:16","t",0],["2026-08-07T10:32","t",0],["2026-08-07T14:09","t",0],["2026-08-07T17:55","t",0],["2026-08-07T20:50","t",0],["2026-08-08T07:10","t",0],["2026-08-08T16:54","d",1],["2026-08-08T17:23","t",0],["2026-08-10T02:19","t",0],["2026-08-10T09:30","t",0],["2026-08-10T20:43","t",0],["2026-08-11T19:00","d",1],["2026-08-11T19:05","t",0],["2026-08-12T14:02","t",0],["2026-08-12T19:05","t",0],["2026-08-13T13:45","t",0],["2026-08-14T02:53","d",1],["2026-08-15T13:01","d",1],["2026-08-15T15:34","t",0],["2026-08-15T20:57","m",1],["2026-08-16T09:44","m",1],["2026-08-16T10:06","d",0],["2026-08-16T11:17","d",1],["2026-08-16T21:33","t",0],["2026-08-17T08:54","m",1],["2026-08-17T19:44","t",0],["2026-08-18T10:47","d",1],["2026-08-18T15:29","t",1],["2026-08-18T21:36","t",0],["2026-08-19T17:50","t",0],["2026-08-19T20:31","t",0],["2026-08-20T14:25","t",0],["2026-08-20T17:52","d",1],["2026-08-21T03:37","t",0],["2026-08-21T17:26","t",0],["2026-08-21T23:30","t",0],["2026-08-22T11:42","t",1],["2026-08-22T17:51","t",1],["2026-08-22T20:54","t",0],["2026-08-23T00:11","m",1],["2026-08-23T05:35","t",0],["2026-08-23T21:41","t",0],["2026-08-24T16:53","t",1],["2026-08-24T17:13","t",0],["2026-08-26T00:14","t",0],["2026-08-26T19:05","t",1],["2026-08-26T21:00","t",0],["2026-08-27T06:12","t",0],["2026-08-27T11:12","d",1],["2026-08-27T19:42","t",1],["2026-08-27T20:03","d",0],["2026-08-28T06:39","d",0],["2026-08-28T17:03","d",1],["2026-08-28T20:18","t",0],["2026-08-28T20:25","t",1],["2026-08-29T08:15","t",0],["2026-08-29T09:16","m",1],["2026-08-29T13:50","t",0],["2026-08-29T14:46","t",0],["2026-08-29T15:54","m",1],["2026-08-30T13:51","t",0],["2026-08-30T18:45","d",0],["2026-08-31T18:42","t",0],["2026-09-01T07:55","d",1],["2026-09-01T11:15","t",1],["2026-09-01T11:16","m",1],["2026-09-01T11:44","t",1],["2026-09-02T08:44","t",0],["2026-09-02T09:09","d",1],["2026-09-02T14:45","d",1],["2026-09-03T13:08","t",1],["2026-09-03T16:10","t",0],["2026-09-03T18:29","t",0],["2026-09-04T11:55","d",1],["2026-09-04T12:46","t",0],["2026-09-04T15:16","t",0],["2026-09-04T18:13","t",0],["2026-09-05T07:23","t",1],["2026-09-05T09:41","t",0],["2026-09-05T15:07","t",0],["2026-09-06T07:56","t",1],["2026-09-06T08:09","t",1],["2026-09-06T09:43","m",1]],
+"Captain Vantage": [["2026-06-29T18:15","t",0],["2026-06-30T14:27","t",0],["2026-06-30T15:06","d",1],["2026-06-30T16:05","t",0],["2026-06-30T21:21","t",0],["2026-07-01T11:02","d",0],["2026-07-01T21:53","t",0],["2026-07-01T21:54","t",0],["2026-07-03T19:19","t",0],["2026-07-03T21:57","t",0],["2026-07-04T07:28","t",0],["2026-07-05T19:04","t",0],["2026-07-06T01:21","t",0],["2026-07-06T10:14","t",0],["2026-07-06T11:16","t",0],["2026-07-07T15:14","t",0],["2026-07-07T18:39","d",1],["2026-07-08T10:18","t",0],["2026-07-08T18:41","m",1],["2026-07-09T05:14","t",0],["2026-07-09T16:01","t",0],["2026-07-09T17:49","t",0],["2026-07-10T21:57","t",0],["2026-07-11T21:20","d",1],["2026-07-12T20:34","t",0],["2026-07-13T14:06","t",0],["2026-07-14T07:44","t",0],["2026-07-14T09:05","t",0],["2026-07-15T12:08","d",1],["2026-07-15T18:45","t",0],["2026-07-16T17:06","d",1],["2026-07-16T23:07","d",1],["2026-07-17T19:42","t",0],["2026-07-19T14:10","t",0],["2026-07-19T15:14","d",1],["2026-07-19T19:41","t",0],["2026-07-19T23:56","t",0],["2026-07-20T10:13","t",0],["2026-07-21T17:08","d",1],["2026-07-21T17:14","d",1],["2026-07-22T17:39","t",0],["2026-07-22T21:29","t",0],["2026-07-22T21:30","t",0],["2026-07-24T01:05","m",1],["2026-07-24T19:11","d",0],["2026-07-25T19:56","t",0],["2026-07-26T01:35","t",0],["2026-07-26T17:51","t",0],["2026-07-28T20:31","t",0],["2026-07-29T14:23","t",0],["2026-07-30T02:30","t",0],["2026-07-30T16:05","t",0],["2026-07-30T23:22","t",0],["2026-07-31T08:50","t",0],["2026-07-31T15:42","d",1],["2026-08-01T08:04","t",0],["2026-08-01T12:43","d",1],["2026-08-02T16:44","t",0],["2026-08-02T17:50","t",0],["2026-08-02T21:51","d",1],["2026-08-03T17:09","d",1],["2026-08-03T20:47","t",0],["2026-08-04T08:55","t",0],["2026-08-05T12:17","t",0],["2026-08-05T14:38","t",0],["2026-08-05T15:17","t",0],["2026-08-05T15:21","t",0],["2026-08-07T06:59","t",0],["2026-08-07T07:37","t",0],["2026-08-07T20:50","d",1],["2026-08-07T21:22","t",0],["2026-08-09T11:54","d",0],["2026-08-10T19:00","t",0],["2026-08-10T20:43","d",1],["2026-08-11T08:46","t",0],["2026-08-11T20:49","t",0],["2026-08-12T14:02","d",1],["2026-08-12T19:03","m",1],["2026-08-13T13:44","d",1],["2026-08-13T17:20","t",0],["2026-08-14T17:11","t",0],["2026-08-14T20:22","t",0],["2026-08-16T10:47","t",0],["2026-08-16T14:06","t",0],["2026-08-16T16:03","d",1],["2026-08-17T14:57","t",0],["2026-08-18T12:04","t",0],["2026-08-19T14:57","t",0],["2026-08-19T20:30","m",1],["2026-08-19T20:41","t",0],["2026-08-20T14:24","m",1],["2026-08-20T17:25","d",0],["2026-08-20T17:52","t",0],["2026-08-20T20:41","t",0],["2026-08-21T22:45","t",0],["2026-08-21T22:55","t",1],["2026-08-22T02:25","t",1],["2026-08-22T11:52","t",0],["2026-08-22T17:51","d",1],["2026-08-23T00:12","t",1],["2026-08-24T17:04","t",1],["2026-08-24T20:13","t",1],["2026-08-24T20:24","t",0],["2026-08-25T13:00","m",0],["2026-08-26T07:12","t",0],["2026-08-26T09:26","t",0],["2026-08-26T18:57","t",0],["2026-08-26T21:00","d",1],["2026-08-27T11:13","t",0],["2026-08-27T19:10","t",1],["2026-08-27T20:03","d",1],["2026-08-28T18:58","t",1],["2026-08-29T15:16","t",0],["2026-08-29T15:55","t",0],["2026-08-30T01:15","t",0],["2026-08-30T11:27","t",1],["2026-08-30T13:51","d",1],["2026-08-31T21:52","t",1],["2026-09-01T11:17","t",0],["2026-09-01T11:43","d",1],["2026-09-02T09:10","t",0],["2026-09-02T14:45","t",1],["2026-09-02T22:23","t",0],["2026-09-03T11:10","t",1],["2026-09-03T18:28","m",1],["2026-09-04T11:32","t",0],["2026-09-04T11:55","t",1],["2026-09-04T15:16","d",1],["2026-09-05T13:12","t",0],["2026-09-05T18:30","t",1],["2026-09-05T19:54","t",0],["2026-09-06T07:55","d",1],["2026-09-06T08:08","m",1],["2026-09-06T09:44","t",1],["2026-09-06T20:52","t",0]]
+};
+
+const RELEASE = Date.parse("2026-08-12T00:00");
+function parseT(t){ return Date.parse(t.includes('Z')? t : t+":00Z"); }
+
+function simulate(pings, rules){
+  let score = 0.5, missRun = 0, last = null;
+  const out = [];
+  for (const p of pings){
+    const d = parseT(p[0]);
+    if (rules.decay>0 && last!==null){
+      const days = (d-last)/86400000;
+      if (days>0){
+        const drift = rules.decay*days;
+        if (score>0.5) score = Math.max(0.5, score-drift);
+        else if (score<0.5) score = Math.min(0.5, score+drift);
+      }
+    }
+    last = d;
+    if (rules.ignoreAway && p[2]===1){ out.push(score); continue; }
+    if (p[1]==='t'){ score += 0.08; missRun = 0; }
+    else if (p[1]==='d'){ score -= rules.refusal; missRun = 0; }
+    else { missRun++; if (missRun > rules.grace) score -= rules.miss; }
+    score = Math.max(rules.floor, Math.min(1, score));
+    out.push(score);
+  }
+  return out;
+}
+
+const heroSelect = document.getElementById('heroSelect');
+Object.keys(HEROES).forEach(name=>{
+  const o = document.createElement('option'); o.value = name; o.textContent = name;
+  heroSelect.appendChild(o);
+});
+
+const sliders = ['sMiss','sRef','sGrace','sDecay','sFloor'];
+sliders.forEach(id=> document.getElementById(id).addEventListener('input', drawLab));
+heroSelect.addEventListener('change', drawLab);
+document.getElementById('cAway').addEventListener('change', drawLab);
+
+function drawLab(){
+  const miss = parseFloat(document.getElementById('sMiss').value);
+  const ref = parseFloat(document.getElementById('sRef').value);
+  const grace = parseInt(document.getElementById('sGrace').value);
+  const decay = parseFloat(document.getElementById('sDecay').value);
+  const floor = parseFloat(document.getElementById('sFloor').value);
+  const away = document.getElementById('cAway').checked;
+  document.getElementById('vMiss').textContent = miss.toFixed(2);
+  document.getElementById('vRef').textContent = ref.toFixed(2);
+  document.getElementById('vGrace').textContent = grace;
+  document.getElementById('vDecay').textContent = decay.toFixed(3);
+  document.getElementById('vFloor').textContent = floor.toFixed(2);
+
+  const pings = HEROES[heroSelect.value];
+  const base = simulate(pings, {miss:0.12, refusal:0.12, grace:0, decay:0, floor:0, ignoreAway:false});
+  const mine = simulate(pings, {miss, refusal:ref, grace, decay, floor, ignoreAway:away});
+
+  const svg = document.getElementById('labChart');
+  const W = 680, H = 260, top=16, bottom=70, left=10, right=10;
+  const plotH = H - top - bottom;
+  const n = pings.length;
+  const x = i => left + (i/(n-1)) * (W-left-right);
+  const y = v => top + (1-v) * plotH;
+  const pts = arr => arr.map((v,i)=> x(i)+','+y(v).toFixed(1)).join(' ');
+
+  let relIdx = pings.findIndex(p => parseT(p[0]) >= RELEASE);
+  if (relIdx === -1) relIdx = n-1;
+
+  let svgOut = '<title>Hero health lab chart</title>';
+  for (let g=0; g<=1; g+=0.25){
+    svgOut += `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--muted)" stroke-width="0.5" opacity="0.3"/>`;
+    svgOut += `<text x="2" y="${y(g)+3}" font-size="9" fill="var(--muted)">${g.toFixed(2)}</text>`;
+  }
+  svgOut += `<line x1="${x(relIdx)}" y1="${top}" x2="${x(relIdx)}" y2="${top+plotH}" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  svgOut += `<text x="${Math.min(x(relIdx)+4,W-70)}" y="${top+10}" font-size="10" fill="var(--red)" font-weight="700">4.2 ships</text>`;
+  svgOut += `<polyline points="${pts(base)}" fill="none" stroke="var(--ink2)" stroke-width="2"/>`;
+  svgOut += `<polyline points="${pts(mine)}" fill="none" stroke="var(--orange)" stroke-width="2.5"/>`;
+  svg.innerHTML = svgOut;
+
+  const stripWrap = document.getElementById('stripWrap');
+  const barW = Math.max(1, (W-left-right)/n - 0.5);
+  let strip = `<svg width="100%" viewBox="0 0 ${W} 22" style="margin-top:6px;">`;
+  pings.forEach((p,i)=>{
+    const col = p[1]==='t' ? 'var(--green)' : (p[1]==='d' ? 'var(--amber)' : 'var(--red)');
+    const yy = p[2]===1 ? 11 : 2;
+    const hh = p[2]===1 ? 9 : 18;
+    strip += `<rect x="${x(i)-barW/2}" y="${yy}" width="${barW}" height="${hh}" fill="${col}"/>`;
+  });
+  strip += '</svg>';
+  stripWrap.innerHTML = strip;
+
+  const endMine = mine[mine.length-1].toFixed(2);
+  const endBase = base[base.length-1].toFixed(2);
+  document.getElementById('labNote').textContent =
+    `Strip below the chart: each bar is one real offer (green = taken, amber = declined, red = missed; tall bars were outside this hero's home area). Ending score under today's rules: ${endBase}. Under your rules: ${endMine}.`;
+}
+drawLab();
+
+const CHECKLIST = [
+  ["Separate the miss penalty from the decline penalty","history.py","A missed ping and a declined ping no longer subtract the same amount."],
+  ["Add decay back toward neutral","history.py","A score measurably drifts back toward 0.5 after a period with no pings."],
+  ["Soften or remove the hard floor","history.py / config.py","A string of misses can no longer push a score all the way to 0 within days."],
+  ["Alert a human before someone goes silent","offer.py / history.py","Crossing a low-score threshold for several pings running raises a flag a handler or support lead can see."],
+  ["Persist and log the score","history.py","A score's value and every change to it can be queried after the fact, not just held in memory."],
+  ["Resolve the glossary mismatch","wiki glossary / routing.py","The documented inputs and the coded inputs say the same thing."]
+];
+const cl = document.getElementById('checklist');
+CHECKLIST.forEach((item,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = `<input type="checkbox" id="chk${i}"><div class="txt"><b>${item[0]}</b><div class="meta">${item[1]} &mdash; done when: ${item[2]}</div></div>`;
+  li.querySelector('input').addEventListener('change', ()=>{ li.classList.toggle('done'); updateProgress(); });
+  cl.appendChild(li);
+});
+function updateProgress(){
+  const total = CHECKLIST.length;
+  const done = document.querySelectorAll('#checklist input:checked').length;
+  document.getElementById('progFill').style.width = (done/total*100)+'%';
+  document.getElementById('progText').textContent = `${done} of ${total}`;
+}
+function copyChecklist(){
+  const text = CHECKLIST.map((item,i)=>{
+    const done = document.getElementById('chk'+i).checked ? '[x]' : '[ ]';
+    return `${done} ${item[0]} (${item[1]}) — done when: ${item[2]}`;
+  }).join('\n');
+  const btn = document.querySelector('.copybtn');
+  const ok = ()=>{ const old = btn.textContent; btn.textContent = 'Copied!'; setTimeout(()=> btn.textContent = old, 1500); };
+  const fail = ()=>{ const old = btn.textContent; btn.textContent = 'Could not copy — select manually'; setTimeout(()=> btn.textContent = old, 2000); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok).catch(fail);
+  } else {
+    fail();
+  }
+}
+</script>
