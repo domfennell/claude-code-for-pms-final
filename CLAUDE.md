@@ -185,3 +185,32 @@ gives room.
   this back up before drafting that specific output.
 - Next: resume the paused interview intake if that update is still
   needed; otherwise keep refining the main write-up doc.
+
+### Session findings (Module 5)
+
+- Helen Achebe (Director of Product) asked for a one-pager plus a
+  clickable prototype of what to build instead of the routing bug fix,
+  from the point of view of the people it affects — not a setting,
+  and grounded in a years-old unanswered question from Wen Li about
+  whether a missed ping should count against a responder at all.
+- The database, not assumption, is the source of truth for handler
+  relationships: Vesper's real handler is Aunt Dot, not Kip (who
+  handles Meteor Mite and The Gale). Caught this before it shipped in
+  the brief.
+- The wiki holds real handler interview transcripts (console-redesign
+  research, early Sept) for Aunt Dot, Kip, Halloran, and Mr. Ambrose —
+  worth reading before assuming what a handler wants; Dot's and Kip's
+  actual asks didn't match the first drafted design.
+- Built `05-super-speed/dot-and-vesper-mock.html`: a prototype that
+  simulates the old vs. new scoring rule against real ping history,
+  switchable across Vesper, The Undertow, Farlight, and Nightwell
+  (used as a stress-test control case — she dipped but recovered on
+  her own, and the prototype initially mislabeled her as "fixed"
+  until that was caught and corrected).
+- Vesper's headline numbers in the brief are cited exactly from the
+  existing 4.2 write-up, not recomputed, to avoid the two documents
+  drifting apart; the other three responders are computed live since
+  no prior document covers them.
+- Still open: the "Recovering" label is proposed but untested with an
+  actual handler; the scoring formula's exact constants are
+  placeholders pending the Staff Engineer's sign-off.
