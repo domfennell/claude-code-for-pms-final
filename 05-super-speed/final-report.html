@@ -2,336 +2,477 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Release 4.2 — what happened, and the fix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Archivo:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f4f6fb;
-    --card: #ffffff;
-    --ink: #0f172a;
-    --muted: #64748b;
-    --border: #e6e9f2;
-    --accent: #3457d5;
-    --accent-soft: #eaefff;
-    --good: #0f9d58;
-    --good-soft: #e6f7ee;
-    --bad: #d8432f;
-    --bad-soft: #fdecea;
-    --amber: #b7791f;
-    --amber-soft: #fff6e0;
+:root{
+  --page:#1859b5; --panel:#ffffff; --ink:#0a1f44; --ink2:#1a2f54; --body-text:#111318;
+  --yellow:#ffd400; --orange:#ff6a00; --green:#0c9a53; --red:#d81e1e; --amber:#e08a00;
+  --muted:#5b6474; --dot: rgba(10,31,68,0.16); --shadow: var(--ink);
+  --chip-bg:#f1f1ef;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#07142e; --panel:#15181f; --ink:#ffd400; --ink2:#ff6a00; --body-text:#f3f1e7;
+    --yellow:#ffd400; --orange:#ff6a00; --green:#36d08a; --red:#ff5a5a; --amber:#ffb43d;
+    --muted:#aeb3bf; --dot: rgba(255,212,0,0.14); --shadow:#000000;
+    --chip-bg:#1f232c;
+    color-scheme: dark;
   }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    margin: 0;
-    line-height: 1.5;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+}
+* { box-sizing: border-box; }
+html,body { height: 100%; }
+body{
+  margin:0;
+  font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color: var(--body-text);
+  background-color: var(--page);
+  background-image:
+    radial-gradient(circle, var(--dot) 1.6px, transparent 1.8px);
+  background-size: 16px 16px;
+  min-height: 100vh;
+  display:flex;
+  flex-direction:column;
+}
+.bangers{ font-family:"Bangers","Archivo",sans-serif; letter-spacing:.5px; }
 
-  /* Hero */
-  .hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1c2b55 55%, #3457d5 100%);
-    color: #fff;
-    padding: 72px 24px 56px;
-    text-align: center;
-  }
-  .hero .eyebrow { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #aebbff; font-weight: 700; margin-bottom: 14px; }
-  .hero h1 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; margin: 0 0 16px; letter-spacing: -0.01em; max-width: 760px; margin-left: auto; margin-right: auto; }
-  .hero p { font-size: 16px; color: #cdd5f0; max-width: 620px; margin: 0 auto; }
-  .hero .badges { margin-top: 28px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .hero .badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 6px 14px; font-size: 13px; color: #eef0ff; }
+/* Top bar */
+.topbar{ padding: 18px 18px 10px; }
+.title-strip{
+  max-width: 980px; margin: 0 auto 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+}
+.brand{ color:#fff; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; opacity:.85; }
+.progress-track{ max-width:980px; margin:0 auto 14px; height:8px; background:rgba(255,255,255,0.25); border-radius:99px; border:2px solid rgba(255,255,255,0.4); overflow:hidden; }
+.progress-fill{ height:100%; background: var(--yellow); border-radius:99px; transition: width .25s ease; }
 
-  section { margin-top: 56px; }
-  h2.section-title { font-size: 24px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; }
-  p.section-sub { color: var(--muted); font-size: 15px; margin: 0 0 28px; max-width: 680px; }
+.breadcrumb{ max-width:980px; margin:0 auto; display:flex; gap:8px; flex-wrap:wrap; }
+.crumb{
+  font-family:"Archivo",sans-serif; font-weight:800; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em;
+  padding:7px 14px; border-radius:999px; border:2.5px solid var(--ink); background: var(--chip-bg); color: var(--ink);
+  cursor:pointer; user-select:none; transition: transform .12s ease;
+}
+.crumb:hover{ transform: translateY(-1px); }
+.crumb.active{ background: var(--orange); color:#fff; border-color: var(--ink); box-shadow: 3px 3px 0 var(--shadow); }
+.crumb.done{ background: var(--green); color:#fff; }
 
-  /* What happened */
-  .story-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: stretch; }
-  @media (max-width: 820px) { .story-grid { grid-template-columns: 1fr; } }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
-  .story-text p { margin: 0 0 14px; font-size: 15px; }
-  .story-text strong { color: var(--ink); }
-  .loop-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .loop-caption { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 10px; max-width: 320px; }
+/* Stage */
+.stage-wrap{ flex:1; display:flex; align-items:center; justify-content:center; padding: 10px 18px 14px; }
+.panel{
+  width:100%; max-width: 920px; min-height: 480px;
+  background: var(--panel); border: 4px solid var(--ink); border-radius: 20px;
+  box-shadow: 10px 10px 0 var(--shadow);
+  padding: 34px 36px;
+  position:relative;
+  overflow: hidden;
+}
+.subcounter{
+  position:absolute; top:16px; right:20px; font-size:11.5px; font-weight:800; color: var(--muted);
+  background: var(--chip-bg); border:2px solid var(--ink); border-radius:999px; padding:4px 11px;
+}
 
-  .chart-card { margin-top: 20px; }
-  .chart-card h3 { font-size: 14px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 4px; }
-  .chart-card .chart-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+/* Nav */
+.navbar{ max-width:980px; margin: 0 auto; padding: 4px 18px 26px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.nav-btn{
+  font-family:"Archivo",sans-serif; font-weight:900; font-size:15px; letter-spacing:.02em;
+  background: var(--yellow); color: var(--ink); border:3px solid var(--ink); border-radius:12px;
+  padding:12px 24px; cursor:pointer; box-shadow:5px 5px 0 var(--shadow); transition: transform .08s ease, box-shadow .08s ease;
+}
+.nav-btn:active{ transform: translate(3px,3px); box-shadow:2px 2px 0 var(--shadow); }
+.nav-btn:disabled{ opacity:.35; cursor:not-allowed; box-shadow:none; }
+.nav-count{ color:#fff; font-weight:800; font-size:13px; opacity:.9; }
 
-  /* Module cards */
-  .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-  @media (max-width: 760px) { .module-grid { grid-template-columns: 1fr; } }
-  .module-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
-  .module-num { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 14px; }
-  .module-head { display: flex; align-items: center; gap: 10px; }
-  .module-head h3 { margin: 0; font-size: 16px; font-weight: 800; }
-  .module-finding { font-size: 13.5px; background: var(--amber-soft); border-left: 3px solid var(--amber); padding: 10px 12px; border-radius: 6px; color: #5c4208; }
-  .module-finding b { color: #3c2c04; }
-  .prompt-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-  .prompt-bubble { font-family: "SF Mono", "Courier New", monospace; font-size: 12.5px; background: #0f172a; color: #d7e0ff; padding: 12px 14px; border-radius: 10px; white-space: pre-wrap; line-height: 1.55; }
-  .module-card.empty { opacity: 0.7; }
-  .module-card.empty .module-finding { background: #f1f1f1; border-left-color: #c7c7c7; color: #666; }
-  .module-card.empty .prompt-bubble { background: #e9ecf5; color: #6b7280; font-style: italic; }
+/* Shared content styles */
+h1.slide-title{ font-size: clamp(26px, 4vw, 38px); color: var(--ink); margin: 0 0 14px; line-height:1.08; }
+h2.slide-title{ font-size: clamp(22px, 3.2vw, 30px); color: var(--ink); margin: 0 0 14px; }
+p.sub{ color: var(--muted); font-size:14.5px; margin:0 0 20px; max-width:640px; }
+.stamp-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.stamp{
+  font-weight:800; font-size:12.5px; color:#fff; background: var(--ink2); border:2px solid var(--ink);
+  border-radius:999px; padding:6px 14px; transform: rotate(-2deg);
+}
+.stamp:nth-child(2n){ transform: rotate(2deg); background: var(--red); }
+.stamp:nth-child(3n){ background: var(--green); }
 
-  /* Fix section */
-  .fix-callout { background: var(--good-soft); border: 1px solid #bfe8d3; border-radius: 12px; padding: 16px 18px; font-size: 14.5px; color: #0b5c37; margin-bottom: 20px; }
-  .fix-points { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0; }
-  @media (max-width: 760px) { .fix-points { grid-template-columns: repeat(2, 1fr); } }
-  .fix-point { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
-  .fix-point .emoji { font-size: 22px; display: block; margin-bottom: 6px; }
-  .fix-point .label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
-  .proto-preview { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 18px; margin-bottom: 22px; }
-  @media (max-width: 760px) { .proto-preview { grid-template-columns: 1fr; } }
-  .mini-head { font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 14px; }
-  .pp-row { display: flex; align-items: center; gap: 12px; }
-  .pp-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0; }
-  .pp-name { font-weight: 700; font-size: 15px; }
-  .pp-area { font-size: 12.5px; color: var(--muted); }
-  .pp-chip { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-left: auto; background: var(--good-soft); color: var(--good); white-space: nowrap; }
-  .pp-score { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 600; }
-  .pp-phone { width: 170px; border: 7px solid #15192b; border-radius: 28px; background: #fafbfe; padding: 22px 12px 12px; position: relative; }
-  .pp-phone::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 46px; height: 10px; background: #15192b; border-radius: 6px; }
-  .pp-callout { background: #fff4d6; border-radius: 8px; padding: 9px; font-size: 11.5px; font-weight: 600; margin-bottom: 8px; }
-  .pp-note { background: var(--good-soft); color: #0b6b3d; border-radius: 8px; padding: 9px; font-size: 11px; line-height: 1.4; }
-  .open-proto-btn { display: block; text-align: center; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(52,87,213,0.3); }
-  .open-proto-btn:hover { background: #2a47b8; }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:680px){ .grid2{ grid-template-columns:1fr; } }
 
-  /* Skill section */
-  .skill-card { background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%); border: 1px solid var(--border); border-radius: 16px; padding: 26px; }
-  .skill-checks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
-  @media (max-width: 760px) { .skill-checks { grid-template-columns: 1fr; } }
-  .skill-check { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
-  .skill-check .tick { color: var(--accent); font-weight: 900; font-size: 16px; line-height: 1.3; }
-  .skill-check .t { font-size: 13.5px; }
-  .skill-check .t b { display: block; font-size: 14px; margin-bottom: 2px; }
-  .skill-note { margin-top: 18px; font-size: 13.5px; color: var(--muted); background: #fff; border: 1px dashed #d7dbe8; border-radius: 10px; padding: 12px 14px; }
-  code.inline { background: #eef1f8; padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+.comic-panel{
+  background: var(--chip-bg); border:3px solid var(--ink); border-radius:14px; padding:16px 18px; position:relative;
+}
+.comic-panel .frame-no{
+  position:absolute; top:-12px; left:-12px; width:30px; height:30px; border-radius:50%;
+  background: var(--orange); border:3px solid var(--ink); color:#fff; font-family:"Bangers"; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+}
+.comic-panel h4{ margin:4px 0 8px; font-size:15.5px; color: var(--ink); }
+.comic-panel p{ margin:0; font-size:13.5px; color: var(--body-text); line-height:1.5; }
+.comic-panel code{ background:rgba(0,0,0,0.08); padding:1px 5px; border-radius:4px; font-size:12px; }
 
-  footer { margin-top: 70px; padding: 30px 24px; text-align: center; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--border); }
+.loop-caption, .chart-caption{ font-size:12.5px; color: var(--muted); text-align:center; margin-top:12px; max-width:480px; margin-left:auto; margin-right:auto; }
+
+/* Module slide */
+.module-head{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.issue-no{
+  width:58px; height:58px; border-radius:50%; background: var(--orange); border:4px solid var(--ink);
+  color:#fff; font-family:"Bangers"; font-size:26px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.module-head h2{ margin:0; font-size:24px; color: var(--ink); }
+.finding-box{
+  background: var(--yellow); border:3px solid var(--ink); border-radius:10px; padding:12px 14px; margin-bottom:16px;
+  font-size:14px; color:#201700; font-weight:600;
+}
+.finding-tag{ display:inline-block; font-family:"Bangers"; font-size:13px; letter-spacing:.5px; background: var(--ink); color:#fff; padding:2px 10px; border-radius:6px; margin-bottom:6px; }
+.prompt-tag{ font-weight:800; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color: var(--muted); margin:0 0 8px; }
+.speech-bubble{
+  position:relative; background: var(--ink); color:#e9edff; border:3px solid var(--ink); border-radius:14px;
+  padding:14px 16px; font-family:"SF Mono","Courier New",monospace; font-size:12.5px; line-height:1.6; white-space:pre-wrap;
+}
+.speech-bubble::after{
+  content:""; position:absolute; left:28px; bottom:-14px; width:0; height:0;
+  border-left:10px solid transparent; border-right:10px solid transparent; border-top:14px solid var(--ink);
+}
+.empty-note{ font-style:italic; color: var(--muted); }
+
+/* Fix slide */
+.fix-callout{ background: var(--green); color:#fff; border:3px solid var(--ink); border-radius:12px; padding:14px 16px; font-weight:700; font-size:14px; margin-bottom:18px; }
+.fix-points{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+@media (max-width:680px){ .fix-points{ grid-template-columns:repeat(2,1fr); } }
+.fix-point{ background: var(--chip-bg); border:2.5px solid var(--ink); border-radius:12px; padding:12px 8px; text-align:center; }
+.fix-point .emoji{ font-size:22px; display:block; margin-bottom:4px; }
+.fix-point .label{ font-size:11.5px; font-weight:700; color: var(--ink); }
+.scope-note{ font-size:12.5px; color: var(--muted); text-align:center; border:2px dashed var(--muted); border-radius:10px; padding:10px 14px; }
+
+.proto-preview{ display:grid; grid-template-columns:1.3fr .9fr; gap:16px; margin: 16px 0; }
+@media (max-width:680px){ .proto-preview{ grid-template-columns:1fr; } }
+.mini-card{ background: var(--chip-bg); border:3px solid var(--ink); border-radius:14px; padding:16px; }
+.mini-head{ font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color: var(--muted); margin:0 0 12px; }
+.pp-row{ display:flex; align-items:center; gap:10px; }
+.pp-avatar{ width:36px; height:36px; border-radius:50%; background: var(--orange); border:2px solid var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; }
+.pp-name{ font-weight:800; font-size:14.5px; color: var(--ink); }
+.pp-area{ font-size:12px; color: var(--muted); }
+.pp-chip{ margin-left:auto; background: var(--green); color:#fff; border:2px solid var(--ink); font-weight:800; font-size:11px; padding:3px 9px; border-radius:999px; }
+.pp-score{ font-size:11.5px; color: var(--muted); margin-top:6px; font-weight:700; }
+.pp-phone{ width:150px; margin:0 auto; border:6px solid var(--ink); border-radius:24px; background:#fafbfe; padding:18px 10px 10px; position:relative; }
+.pp-phone::before{ content:""; position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:8px; background: var(--ink); border-radius:5px; }
+.pp-callout{ background: var(--yellow); border-radius:8px; padding:8px; font-size:10.5px; font-weight:700; margin-bottom:7px; color:#201700; }
+.pp-note{ background: var(--green); color:#fff; border-radius:8px; padding:8px; font-size:9.5px; line-height:1.4; }
+.open-btn{
+  display:block; text-align:center; background: var(--red); color:#fff; text-decoration:none; font-weight:900;
+  font-size:15px; padding:13px 18px; border-radius:12px; border:3px solid var(--ink); box-shadow:5px 5px 0 var(--shadow);
+}
+
+/* Skill slide */
+.skill-checks{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0; }
+@media (max-width:680px){ .skill-checks{ grid-template-columns:1fr; } }
+.skill-check{ display:flex; gap:8px; align-items:flex-start; background: var(--chip-bg); border:2.5px solid var(--ink); border-radius:10px; padding:10px 12px; }
+.skill-check .tick{ color: var(--green); font-weight:900; font-size:16px; }
+.skill-check b{ display:block; font-size:13px; color: var(--ink); margin-bottom:2px; }
+.skill-check span.t{ font-size:12px; color: var(--body-text); }
+.skill-note{ font-size:12.5px; color: var(--muted); border:2px dashed var(--muted); border-radius:10px; padding:12px 14px; margin-top:10px; }
+
+/* End slide */
+.end-wrap{ text-align:center; padding-top:40px; }
+.end-wrap .bangers{ font-size: clamp(40px,7vw,64px); color: var(--red); -webkit-text-stroke: 2px var(--ink); text-shadow:5px 5px 0 var(--yellow); }
+
+footer{ text-align:center; color:#dfe6ff; font-size:11.5px; padding: 10px 18px 26px; opacity:.85; }
+code.inline{ background: rgba(0,0,0,0.08); padding:1px 6px; border-radius:4px; font-size:12px; }
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="eyebrow">Rook Dispatch · Release 4.2</div>
-  <h1>A missed call was scored the same as a refusal — and nothing let it recover.</h1>
-  <p>This is what actually happened, backed by the findings and the exact prompts that surfaced them, the fix we prototyped, and the skill that stops it shipping quietly again.</p>
-  <div class="badges">
-    <span class="badge">6 sessions</span>
-    <span class="badge">147 tickets read</span>
-    <span class="badge">1 root cause</span>
-    <span class="badge">4+ responders affected</span>
+<div class="topbar">
+  <div class="title-strip">
+    <div class="brand">Rook Dispatch · Release 4.2 Report</div>
+    <div class="brand" id="slide-tag">—</div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+</div>
+
+<div class="stage-wrap">
+  <div class="panel" id="panel">
+    <span class="subcounter" id="subcounter" style="display:none;"></span>
+    <div id="slide-content"></div>
   </div>
 </div>
 
-<div class="wrap">
+<div class="navbar">
+  <button class="nav-btn" id="prev-btn">← Previous</button>
+  <div class="nav-count" id="nav-count"></div>
+  <button class="nav-btn" id="next-btn">Next →</button>
+</div>
 
-<section id="what-happened">
-  <h2 class="section-title">What happened</h2>
-  <p class="section-sub">Release 4.2 shipped two changes at once on 12 August — and one of them exposed a bug that had been sitting in the scoring logic, unnoticed, for years.</p>
+<footer>Rook Industries is a fictional teaching scenario, Product School's "Claude Code for PMs" course.</footer>
 
-  <div class="story-grid">
-    <div class="card story-text">
-      <p><strong>The release bundled two things.</strong> Ranking was changed to weight nearby responders higher, and the ping timeout was cut from 90 seconds to 60. Both looked like reasonable, separate tuning changes.</p>
-      <p><strong>The timeout cut exposed a bug that was already there.</strong> In <code class="inline">history.py</code>, a missed ping — phone dead, no signal, too slow to answer — was scored exactly the same as a deliberate decline. And nothing let that score recover on its own.</p>
-      <p><strong>Shorter timeout → more misses → more "refusals" → lower rank → fewer pings → no way back.</strong> A handful of responders got caught in this loop right after the release and never climbed out, while the company-wide number quietly looked fine again — because the same work just moved to people who hadn't been caught.</p>
-      <p><strong>The company-wide number lied by averaging.</strong> Acceptance recovered from 54% back to 73% within weeks — but that's the system redistributing work to already-strong responders, not a fix. Four people stayed stuck at the floor the entire time.</p>
+<script>
+const SECTIONS = [
+  { key:'intro', label:'Intro' },
+  { key:'happened', label:'What Happened' },
+  { key:'investigation', label:'The Investigation' },
+  { key:'fix', label:'The Fix' },
+  { key:'skill', label:'The Skill' },
+];
+
+const slides = [
+  // ---------- INTRO ----------
+  { section:'intro', html:`
+    <h1 class="slide-title bangers" style="font-size:clamp(30px,5vw,46px); -webkit-text-stroke:1.5px var(--ink); color:var(--yellow); text-shadow:4px 4px 0 var(--ink);">
+      A missed call was scored the same as a refusal —<br>and nothing let it recover.
+    </h1>
+    <p class="sub" style="font-size:15.5px; max-width:680px;">This is what actually happened with Release 4.2, backed by the findings and the exact prompts that surfaced them, the fix we prototyped, and the skill that stops it shipping quietly again.</p>
+    <div class="stamp-row">
+      <span class="stamp">6 SESSIONS</span>
+      <span class="stamp">147 TICKETS READ</span>
+      <span class="stamp">1 ROOT CAUSE</span>
+      <span class="stamp">4+ RESPONDERS AFFECTED</span>
     </div>
-    <div class="card loop-wrap">
-      <svg width="260" height="260" viewBox="0 0 260 260">
+  `},
+
+  // ---------- WHAT HAPPENED (3 slides) ----------
+  { section:'happened', html:`
+    <h2 class="slide-title bangers">What happened</h2>
+    <p class="sub">Release 4.2 shipped two changes at once on 12 August — one of them exposed a bug that had been sitting in the scoring logic, unnoticed, for years.</p>
+    <div class="grid2">
+      <div class="comic-panel"><span class="frame-no">1</span>
+        <h4>Two changes, one release</h4>
+        <p>Ranking was changed to weight nearby responders higher, and the ping timeout was cut from 90s to 60s. Both looked like safe, separate tweaks.</p>
+      </div>
+      <div class="comic-panel"><span class="frame-no">2</span>
+        <h4>An old bug, newly exposed</h4>
+        <p>In <code>history.py</code>, a missed ping was scored exactly like a deliberate decline — and nothing let that score climb back on its own.</p>
+      </div>
+      <div class="comic-panel"><span class="frame-no">3</span>
+        <h4>The loop with no exit</h4>
+        <p>Shorter timeout → more misses → more "refusals" → lower rank → fewer pings → no way back. A few responders got caught right after launch and never got out.</p>
+      </div>
+      <div class="comic-panel"><span class="frame-no">4</span>
+        <h4>The number that lied</h4>
+        <p>Acceptance recovered from 54% to 73% in weeks — but that's work shifting to already-strong responders. Four people stayed stuck at the floor the whole time.</p>
+      </div>
+    </div>
+  `},
+
+  { section:'happened', html:`
+    <h2 class="slide-title bangers">The compounding bug</h2>
+    <p class="sub">A short timeout feeding a scoring rule with no exit — a few unlucky misses become permanent.</p>
+    <div style="display:flex; justify-content:center;">
+      <svg width="320" height="320" viewBox="0 0 260 260">
         <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#b94a3a"/>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#d81e1e"/>
           </marker>
         </defs>
-        <circle cx="130" cy="130" r="92" fill="none" stroke="#f1d9d6" stroke-width="18"/>
-        <path d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#d8432f" stroke-width="3.5" stroke-dasharray="6,7" marker-end="url(#arrow)"/>
-        <g font-size="11.5" font-weight="700" fill="#5c1a12" text-anchor="middle" font-family="Inter, sans-serif">
-          <rect x="88" y="10" width="84" height="34" rx="9" fill="#fff" stroke="#f0bdb5"/>
+        <circle cx="130" cy="130" r="92" fill="none" stroke="#ffd400" stroke-width="20"/>
+        <path d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#d81e1e" stroke-width="4" stroke-dasharray="7,8" marker-end="url(#arrow)"/>
+        <g font-size="12" font-weight="800" fill="#0a1f44" text-anchor="middle" font-family="Archivo, sans-serif">
+          <rect x="86" y="8" width="88" height="36" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
           <text x="130" y="31">Missed ping</text>
 
-          <rect x="178" y="90" width="78" height="40" rx="9" fill="#fff" stroke="#f0bdb5"/>
-          <text x="217" y="107">Scored as</text>
+          <rect x="176" y="88" width="82" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <text x="217" y="106">Scored as</text>
           <text x="217" y="121">a refusal</text>
 
-          <rect x="150" y="196" width="78" height="40" rx="9" fill="#fff" stroke="#f0bdb5"/>
-          <text x="189" y="213">Rank</text>
-          <text x="189" y="227">drops</text>
+          <rect x="148" y="196" width="82" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <text x="189" y="214">Rank</text>
+          <text x="189" y="229">drops</text>
 
-          <rect x="30" y="196" width="78" height="40" rx="9" fill="#fff" stroke="#f0bdb5"/>
-          <text x="69" y="213">Fewer</text>
-          <text x="69" y="227">pings</text>
+          <rect x="28" y="196" width="82" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <text x="69" y="214">Fewer</text>
+          <text x="69" y="229">pings</text>
 
-          <rect x="4" y="90" width="84" height="40" rx="9" fill="#fff" stroke="#f0bdb5"/>
-          <text x="46" y="107">No way</text>
-          <text x="46" y="121">to recover</text>
+          <rect x="0" y="88" width="88" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <text x="44" y="106">No way</text>
+          <text x="44" y="121">to recover</text>
         </g>
       </svg>
-      <p class="loop-caption">The compounding bug: a short timeout feeds a scoring rule with no exit, so a few unlucky misses become permanent.</p>
     </div>
-  </div>
+    <p class="loop-caption">Four to six responders — including Vesper, The Undertow, and Farlight — got caught in this loop right after the release.</p>
+  `},
 
-  <div class="card chart-card">
-    <h3>Why the company-wide number was misleading</h3>
-    <p class="chart-sub">Ping-level acceptance rate, company-wide — looks recovered. It isn't, for everyone.</p>
-    <svg width="100%" height="180" viewBox="0 0 640 180" preserveAspectRatio="xMidYMid meet">
-      <line x1="60" y1="20" x2="60" y2="140" stroke="#e2e6f0"/>
-      <line x1="60" y1="140" x2="600" y2="140" stroke="#e2e6f0"/>
-      <text x="30" y="24" font-size="11" fill="#94a0b8" font-family="Inter, sans-serif">100%</text>
-      <text x="38" y="144" font-size="11" fill="#94a0b8" font-family="Inter, sans-serif">0%</text>
-      <polyline points="100,45.6 340,98.4 580,57.2" fill="none" stroke="#3457d5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="100" cy="45.6" r="5" fill="#3457d5"/>
-      <circle cx="340" cy="98.4" r="5" fill="#d8432f"/>
-      <circle cx="580" cy="57.2" r="5" fill="#3457d5"/>
-      <text x="100" y="35" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2a4d" font-family="Inter, sans-serif">77%</text>
-      <text x="340" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="#a5281a" font-family="Inter, sans-serif">54%</text>
-      <text x="580" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2a4d" font-family="Inter, sans-serif">73%</text>
-      <text x="100" y="160" text-anchor="middle" font-size="11.5" fill="#64748b" font-family="Inter, sans-serif">Before 4.2</text>
-      <text x="340" y="160" text-anchor="middle" font-size="11.5" fill="#64748b" font-family="Inter, sans-serif">Week it shipped</text>
-      <text x="580" y="160" text-anchor="middle" font-size="11.5" fill="#64748b" font-family="Inter, sans-serif">Late August</text>
+  { section:'happened', html:`
+    <h2 class="slide-title bangers">The number that lied</h2>
+    <p class="sub">Company-wide ping-level acceptance rate. Looks recovered. It isn't, for everyone.</p>
+    <svg width="100%" height="200" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet">
+      <line x1="60" y1="20" x2="60" y2="150" stroke="#0a1f44" stroke-width="2"/>
+      <line x1="60" y1="150" x2="600" y2="150" stroke="#0a1f44" stroke-width="2"/>
+      <text x="26" y="24" font-size="12" fill="#5b6474" font-family="Archivo, sans-serif">100%</text>
+      <text x="38" y="154" font-size="12" fill="#5b6474" font-family="Archivo, sans-serif">0%</text>
+      <polyline points="100,51.9 340,105.6 580,63.4" fill="none" stroke="#ff6a00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="100" cy="51.9" r="7" fill="#0c9a53" stroke="#0a1f44" stroke-width="2"/>
+      <circle cx="340" cy="105.6" r="7" fill="#d81e1e" stroke="#0a1f44" stroke-width="2"/>
+      <circle cx="580" cy="63.4" r="7" fill="#0c9a53" stroke="#0a1f44" stroke-width="2"/>
+      <text x="100" y="38" text-anchor="middle" font-size="14" font-weight="800" fill="#0a1f44" font-family="Archivo, sans-serif">77%</text>
+      <text x="340" y="95" text-anchor="middle" font-size="14" font-weight="800" fill="#d81e1e" font-family="Archivo, sans-serif">54%</text>
+      <text x="580" y="52" text-anchor="middle" font-size="14" font-weight="800" fill="#0a1f44" font-family="Archivo, sans-serif">73%</text>
+      <text x="100" y="172" text-anchor="middle" font-size="12.5" fill="#5b6474" font-family="Archivo, sans-serif">Before 4.2</text>
+      <text x="340" y="172" text-anchor="middle" font-size="12.5" fill="#5b6474" font-family="Archivo, sans-serif">Week it shipped</text>
+      <text x="580" y="172" text-anchor="middle" font-size="12.5" fill="#5b6474" font-family="Archivo, sans-serif">Late August</text>
     </svg>
-    <p class="chart-sub" style="margin-top:4px;">That "recovery" is the same work being redistributed to already-strong responders — four people never came back up. Detail: <code class="inline">00-rook/feedback/4.2-writeup-for-eng-and-product.md</code>.</p>
-  </div>
-</section>
+    <p class="chart-caption">That "recovery" is the same work redistributed to already-strong responders — four people never came back up. Full detail: <code class="inline">00-rook/feedback/4.2-writeup-for-eng-and-product.md</code>.</p>
+  `},
 
-<section id="investigation">
-  <h2 class="section-title">The investigation, module by module</h2>
-  <p class="section-sub">One real finding and the exact prompt that produced it, from each of the six sessions.</p>
-
-  <div class="module-grid">
-
-    <div class="module-card">
-      <div class="module-head"><span class="module-num">1</span><h3>Origin Story</h3></div>
-      <div class="module-finding"><b>No individually logged prompts.</b> This session was onboarding — reading the company context and meeting Rook — run from the shared starter prompt rather than prompts of my own.</div>
-      <div>
-        <div class="prompt-label">My prompt</div>
-        <div class="prompt-bubble">(none recorded — starter prompt only)</div>
-      </div>
-    </div>
-
-    <div class="module-card">
-      <div class="module-head"><span class="module-num">2</span><h3>Super Hearing</h3></div>
-      <div class="module-finding"><b>Finding:</b> 4.2 bundled two routing changes — ranking weights pushed up proximity, and the ping wait was cut from 90s to 60s — with their effects not yet separated.</div>
-      <div>
-        <div class="prompt-label">My prompt</div>
-        <div class="prompt-bubble">I want a good understanding of the before and after. What does 4.2 look like in terms of changes when compared to 4.1? Crucially, were all the changes that were made in the Q3 roadmap? Conversely, are there any in the Q3 roadmap that were cut prior to 4.2 being shipped?</div>
-      </div>
-    </div>
-
-    <div class="module-card">
-      <div class="module-head"><span class="module-num">3</span><h3>Rewind</h3></div>
-      <div class="module-finding"><b>Finding:</b> customer interviews and all 147 support tickets independently described the same problem — tickets widened it to at least 6 affected responders, and confirmed handlers had already ruled out an availability-settings explanation.</div>
-      <div>
-        <div class="prompt-label">My prompt</div>
-        <div class="prompt-bubble">bank this.
+  // ---------- INVESTIGATION (6 slides) ----------
+  { section:'investigation', html:`
+    <div class="module-head"><span class="issue-no">1</span><h2>Origin Story</h2></div>
+    <div class="finding-box"><span class="finding-tag">FINDING</span><br>No individually logged prompts. This session was onboarding — reading the company context and meeting Rook — run from the shared starter prompt rather than prompts of my own.</div>
+    <div class="prompt-tag">My prompt</div>
+    <div class="speech-bubble empty-note">(none recorded — starter prompt only)</div>
+  `},
+  { section:'investigation', html:`
+    <div class="module-head"><span class="issue-no">2</span><h2>Super Hearing</h2></div>
+    <div class="finding-box"><span class="finding-tag">FINDING</span><br>4.2 bundled two routing changes — ranking weights pushed up proximity, and the ping wait was cut from 90s to 60s — with their effects not yet separated.</div>
+    <div class="prompt-tag">My prompt</div>
+    <div class="speech-bubble">I want a good understanding of the before and after. What does 4.2 look like in terms of changes when compared to 4.1? Crucially, were all the changes that were made in the Q3 roadmap? Conversely, are there any in the Q3 roadmap that were cut prior to 4.2 being shipped?</div>
+  `},
+  { section:'investigation', html:`
+    <div class="module-head"><span class="issue-no">3</span><h2>Rewind</h2></div>
+    <div class="finding-box"><span class="finding-tag">FINDING</span><br>Customer interviews and all 147 support tickets independently described the same problem — tickets widened it to at least 6 affected responders, and confirmed handlers had already ruled out an availability-settings explanation.</div>
+    <div class="prompt-tag">My prompt</div>
+    <div class="speech-bubble">bank this.
 
 let's try a correlation exercise. Read every support ticket in Rook's database. Same treatment as before: grouping them into logical buckets to cover what they're unhappy about, who/how many many of the four raised each thing, which a corresponding quote to confirm this.</div>
-      </div>
+  `},
+  { section:'investigation', html:`
+    <div class="module-head"><span class="issue-no">4</span><h2>X-Ray Vision</h2></div>
+    <div class="finding-box"><span class="finding-tag">FINDING</span><br>Company-wide ping-level acceptance rate went 77% → 54% the week 4.2 shipped → recovered to 73% by late August — a recovery that's redistribution, not a fix, since four responders stayed on the floor.</div>
+    <div class="prompt-tag">My prompt</div>
+    <div class="speech-bubble">what would pulling the company-wide acceptance rate before and after tell us?</div>
+  `},
+  { section:'investigation', html:`
+    <div class="module-head"><span class="issue-no">5</span><h2>Super Speed</h2></div>
+    <div class="finding-box"><span class="finding-tag">FINDING</span><br>Vesper's real handler is Aunt Dot, not Kip (who actually handles Meteor Mite and The Gale) — caught against the real database before it shipped in the brief.</div>
+    <div class="prompt-tag">My prompt</div>
+    <div class="speech-bubble">The note says this shouldn't just be a setting we quietly flip. Read the responder I picked from CLAUDE.md and use that name. Do not ask me which one. Walk me through what's still missing from the brief before this could actually get built.</div>
+  `},
+  { section:'investigation', html:`
+    <div class="module-head"><span class="issue-no">6</span><h2>Sidekicks</h2></div>
+    <div class="finding-box" style="background:var(--chip-bg); color:var(--muted);"><span class="finding-tag" style="background:var(--muted);">NOT STARTED</span><br>No prompts logged for this session yet — this report was built during Module 5.</div>
+    <div class="prompt-tag">My prompt</div>
+    <div class="speech-bubble empty-note">(none recorded yet)</div>
+  `},
+
+  // ---------- FIX (2 slides) ----------
+  { section:'fix', html:`
+    <h2 class="slide-title bangers">The fix — not a setting</h2>
+    <p class="sub">Checked against three real stuck responders plus one real control case.</p>
+    <div class="fix-callout">Built from the brief Helen (Director of Product) asked for: something a handler would notice, and something a quiet responder would feel differently about — not a quietly flipped number.</div>
+    <div class="fix-points">
+      <div class="fix-point"><span class="emoji">⬇️</span><span class="label">Miss costs less than a refusal</span></div>
+      <div class="fix-point"><span class="emoji">📈</span><span class="label">Scores fade back to neutral</span></div>
+      <div class="fix-point"><span class="emoji">🪜</span><span class="label">No floor with no way out</span></div>
+      <div class="fix-point"><span class="emoji">⚡</span><span class="label">Stuck responders caught up now</span></div>
     </div>
-
-    <div class="module-card">
-      <div class="module-head"><span class="module-num">4</span><h3>X-Ray Vision</h3></div>
-      <div class="module-finding"><b>Finding:</b> company-wide ping-level acceptance rate went 77% → 54% the week 4.2 shipped → recovered to 73% by late August — a recovery that's redistribution, not a fix, since four responders stayed on the floor.</div>
-      <div>
-        <div class="prompt-label">My prompt</div>
-        <div class="prompt-bubble">what would pulling the company-wide acceptance rate before and after tell us?</div>
-      </div>
-    </div>
-
-    <div class="module-card">
-      <div class="module-head"><span class="module-num">5</span><h3>Super Speed</h3></div>
-      <div class="module-finding"><b>Finding:</b> Vesper's real handler is Aunt Dot, not Kip (who actually handles Meteor Mite and The Gale) — caught against the real database before it shipped in the brief.</div>
-      <div>
-        <div class="prompt-label">My prompt</div>
-        <div class="prompt-bubble">The note says this shouldn't just be a setting we quietly flip. Read the responder I picked from CLAUDE.md and use that name. Do not ask me which one. Walk me through what's still missing from the brief before this could actually get built.</div>
-      </div>
-    </div>
-
-    <div class="module-card empty">
-      <div class="module-head"><span class="module-num">6</span><h3>Sidekicks</h3></div>
-      <div class="module-finding"><b>Not started yet.</b> No prompts logged for this session — this report was built during Module 5.</div>
-      <div>
-        <div class="prompt-label">My prompt</div>
-        <div class="prompt-bubble">(none recorded yet)</div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<section id="fix">
-  <h2 class="section-title">The fix — live, in the prototype</h2>
-  <p class="section-sub">Not a setting. The scoring rule changes, and it's checked against three real stuck responders plus one real control case.</p>
-
-  <div class="fix-callout">
-    Built from the brief Helen (Director of Product) asked for: something a handler would notice, and something a quiet responder would feel differently about — not a quietly flipped number.
-  </div>
-
-  <div class="fix-points">
-    <div class="fix-point"><span class="emoji">⬇️</span><span class="label">A miss costs less than a refusal</span></div>
-    <div class="fix-point"><span class="emoji">📈</span><span class="label">Scores fade back to neutral over time</span></div>
-    <div class="fix-point"><span class="emoji">🪜</span><span class="label">No floor with no way out</span></div>
-    <div class="fix-point"><span class="emoji">⚡</span><span class="label">Stuck responders get caught up now</span></div>
-  </div>
-
-  <div class="proto-preview">
-    <div class="card">
-      <h3 class="mini-head">Aunt Dot's console — after the fix</h3>
-      <div class="pp-row">
-        <div class="pp-avatar">V</div>
-        <div>
-          <div class="pp-name">Vesper</div>
-          <div class="pp-area">Old Town area</div>
+    <div class="scope-note">On purpose, left out here: sliders for the exact numbers (miss penalty, decay rate, floor) — out of scope for this view, so the decision stays on direction, not on tuning a formula.</div>
+  `},
+  { section:'fix', html:`
+    <h2 class="slide-title bangers">See it live</h2>
+    <p class="sub">Computed from Vesper's real ping history — not a mockup.</p>
+    <div class="proto-preview">
+      <div class="mini-card">
+        <h3 class="mini-head">Aunt Dot's console — after the fix</h3>
+        <div class="pp-row">
+          <div class="pp-avatar">V</div>
+          <div><div class="pp-name">Vesper</div><div class="pp-area">Old Town area</div></div>
+          <span class="pp-chip">Recovering</span>
         </div>
-        <span class="pp-chip">Recovering</span>
+        <svg width="100%" height="44" viewBox="0 0 300 44" preserveAspectRatio="none" style="margin-top:12px;">
+          <polyline points="4,28 40,25 80,29 120,20 160,24 200,16 240,12 296,8" fill="none" stroke="#0c9a53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="0" y1="22" x2="300" y2="22" stroke="#c9ccd6" stroke-dasharray="4,4"/>
+        </svg>
+        <div class="pp-score">score: 0.46 (0.5 = neutral), up from 0.00</div>
       </div>
-      <svg width="100%" height="48" viewBox="0 0 300 48" preserveAspectRatio="none" style="margin-top:14px;">
-        <polyline points="4,30 40,27 80,31 120,22 160,26 200,18 240,14 296,10" fill="none" stroke="#0f9d58" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="0" y1="24" x2="300" y2="24" stroke="#d7dbe8" stroke-dasharray="4,4"/>
-      </svg>
-      <div class="pp-score">score: 0.46 (0.5 = neutral), up from 0.00</div>
-    </div>
-    <div class="card" style="display:flex; flex-direction:column; align-items:center;">
-      <h3 class="mini-head" style="align-self:flex-start;">Vesper's phone</h3>
-      <div class="pp-phone">
-        <div class="pp-callout">📍 New callout nearby — Old Town</div>
-        <div class="pp-note">You're back to your normal call volume — a routing issue affected you, and it's fixed.</div>
+      <div class="mini-card" style="display:flex; flex-direction:column; align-items:center;">
+        <h3 class="mini-head" style="align-self:flex-start;">Vesper's phone</h3>
+        <div class="pp-phone">
+          <div class="pp-callout">📍 New callout nearby — Old Town</div>
+          <div class="pp-note">You're back to your normal call volume — a routing issue affected you, and it's fixed.</div>
+        </div>
       </div>
     </div>
-  </div>
+    <a class="open-btn" href="prototype.html" target="_blank">Open the full interactive prototype ↗</a>
+    <p class="chart-caption">Switch between Vesper, The Undertow, Farlight and Nightwell, and toggle today's rule against the new one.</p>
+  `},
 
-  <a class="open-proto-btn" href="prototype.html" target="_blank">Open the full interactive prototype ↗</a>
-  <p class="chart-sub" style="text-align:center; margin-top:10px;">Opens <code class="inline">prototype.html</code> directly — switch between Vesper, The Undertow, Farlight and Nightwell, and toggle today's rule against the new one.</p>
-</section>
-
-<section id="skill">
-  <h2 class="section-title">How this doesn't happen again</h2>
-  <p class="section-sub">A reusable skill, <code class="inline">review-checklist</code>, that checks any brief for the basics a bug like this slips through without.</p>
-
-  <div class="skill-card">
-    <p style="margin:0 0 4px; font-size:14.5px;">Point it at any brief — <code class="inline">/review-checklist &lt;file&gt;</code> — and it checks four things, cold, on any document, not just this one:</p>
+  // ---------- SKILL (1 slide) ----------
+  { section:'skill', html:`
+    <h2 class="slide-title bangers">How this doesn't happen again</h2>
+    <p class="sub">A reusable skill, <code class="inline">review-checklist</code>, that checks any brief for the basics a bug like this slips through without.</p>
     <div class="skill-checks">
-      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Names who owns it</b>Someone is named to actually decide, not just listed as a stakeholder.</span></div>
-      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Says how we'll know it worked</b>A real, checkable condition — not "make it better."</span></div>
-      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Keeps the same scope start to finish</b>Catches scope creep slipped in mid-document.</span></div>
-      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Explains the problem before the fix</b>So a decision never gets asked for before the problem's understood.</span></div>
+      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Names who owns it</b>Someone decides — not just listed as a stakeholder.</span></div>
+      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>How we'll know it worked</b>A real, checkable condition — not "make it better."</span></div>
+      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Keeps the same scope</b>Catches scope creep slipped in mid-document.</span></div>
+      <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Problem before the fix</b>No decision asked for before the problem's understood.</span></div>
     </div>
     <div class="skill-note">
-      Stress-tested against a deliberately bad, made-up brief with planted scope creep and an unnamed owner — caught both, cold, with no tuning toward this specific story. Then run against <code class="inline">brief.md</code> itself, which was missing a success condition and had its decisions ahead of the problem — both fixed as a direct result.
-      <br><br>
-      Skill file: <code class="inline">.claude/skills/review-checklist/SKILL.md</code>
+      Stress-tested against a deliberately bad, made-up brief with planted scope creep and an unnamed owner — caught both, cold. Then run against <code class="inline">brief.md</code> itself, which was missing a success condition and had its decisions ahead of the problem — both fixed as a direct result.
+      <br><br>Skill file: <code class="inline">.claude/skills/review-checklist/SKILL.md</code>
     </div>
-  </div>
-</section>
+  `},
 
-</div>
+  // ---------- END ----------
+  { section:'skill', html:`
+    <div class="end-wrap">
+      <div class="bangers">THE END</div>
+      <p class="sub" style="margin:16px auto 0; text-align:center;">Built from CLAUDE.md and the prompts.md files across all six modules. Rook Industries is a fictional teaching scenario, Product School's "Claude Code for PMs" course.</p>
+    </div>
+  `},
+];
 
-<footer>
-  Rook Industries is a fictional teaching scenario, Product School's "Claude Code for PMs" course. Built from CLAUDE.md and the prompts.md files across all six modules.
-</footer>
+let current = 0;
 
+function sectionInfo(idx){
+  const sec = slides[idx].section;
+  const inSection = slides.map((s,i)=>i).filter(i=>slides[i].section===sec);
+  return { sec, pos: inSection.indexOf(idx)+1, total: inSection.length, first: inSection[0] };
+}
+
+function render(){
+  const s = slides[current];
+  document.getElementById('slide-content').innerHTML = s.html;
+  document.getElementById('panel').scrollTop = 0;
+
+  // breadcrumb
+  const bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  SECTIONS.forEach(sec=>{
+    const el = document.createElement('div');
+    const firstIdx = slides.findIndex(sl=>sl.section===sec.key);
+    const lastIdx = slides.map((sl,i)=>i).filter(i=>slides[i].section===sec.key).slice(-1)[0];
+    el.className = 'crumb' + (sec.key===s.section ? ' active' : (current>lastIdx ? ' done' : ''));
+    el.textContent = sec.label;
+    el.onclick = ()=>{ current = firstIdx; render(); };
+    bc.appendChild(el);
+  });
+
+  // sub counter
+  const info = sectionInfo(current);
+  const sc = document.getElementById('subcounter');
+  if (info.total > 1) {
+    sc.style.display = 'inline-block';
+    sc.textContent = SECTIONS.find(x=>x.key===info.sec).label + ' — ' + info.pos + ' of ' + info.total;
+  } else {
+    sc.style.display = 'none';
+  }
+
+  // progress + nav
+  document.getElementById('progress-fill').style.width = (((current+1)/slides.length)*100) + '%';
+  document.getElementById('slide-tag').textContent = 'Slide ' + (current+1) + ' of ' + slides.length;
+  document.getElementById('nav-count').textContent = (current+1) + ' / ' + slides.length;
+  document.getElementById('prev-btn').disabled = current===0;
+  document.getElementById('next-btn').disabled = current===slides.length-1;
+}
+
+document.getElementById('prev-btn').onclick = ()=>{ if(current>0){ current--; render(); } };
+document.getElementById('next-btn').onclick = ()=>{ if(current<slides.length-1){ current++; render(); } };
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'ArrowRight') document.getElementById('next-btn').click();
+  if (e.key === 'ArrowLeft') document.getElementById('prev-btn').click();
+});
+
+render();
+</script>
 </body>
 </html>
