@@ -215,3 +215,23 @@ gives room.
 - Still open: the "Recovering" label is proposed but untested with an
   actual handler; the scoring formula's exact constants are
   placeholders pending the Staff Engineer's sign-off.
+- Renamed the deliverables to the expected Module 5 names:
+  `05-super-speed/brief.md` and `05-super-speed/prototype.html`.
+- Built a reusable course skill, `.claude/skills/review-checklist`,
+  that checks any brief for a named owner, a checkable success
+  condition, consistent scope, and problem-before-fix ordering.
+  Stress-tested it against a deliberately bad made-up brief (not
+  Rook's) and it correctly caught planted scope creep, an unnamed
+  owner, and solution-before-problem ordering — holds up cold, not
+  just on the brief it was built against.
+- Used the new skill on `05-super-speed/brief.md` itself: it was
+  missing a success condition and had decisions ahead of the full
+  problem explanation. Both fixed — the problem section now comes
+  right after the overview, and a "how we'll know it worked" line
+  was added.
+- Spitballed further course skills, none built yet: persona-review
+  (simulate a named stakeholder's reaction, optionally across
+  models), doc-consistency-check (catch facts that disagree across
+  documents), source-check (flag unsourced claims), entity-check
+  (catch wrong person/role pairings against the database), and an
+  edge-case-finder generalizing the Nightwell stress test.

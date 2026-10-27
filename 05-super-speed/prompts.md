@@ -126,3 +126,35 @@ so should they go in the prototype?
 ### 21.
 
 what do you think helen would say if they were there?
+
+### 22.
+
+is it possible to rename them? answer before chaning anything.
+
+### 23.
+
+push and commited?
+
+### 24.
+
+Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.
+
+### 25.
+
+how do you mean?
+
+### 26.
+
+just to check, is the skill we've created brief agnostic at present? i.e. could i point future briefs at it and it produces the relevant outputs? as opposed to being anchored to the existing brief.md?
+
+### 27.
+
+great. what can we do to improve the skill?
+
+### 28.
+
+let's stress-test it against against a quick and dirty made-up brief.
+
+### 29.
+
+based on the work we've done thus far, what other skills do you think we could create to improve efficiencies? just create anything; just spit ball.

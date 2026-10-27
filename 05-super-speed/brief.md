@@ -6,7 +6,11 @@
 
 If someone misses a call, we score it the same as them saying "no." There's no way back. We want to fix that for good, not just patch it.
 
-## 2. Decisions we need from Helen
+## 2. The problem, and why now
+
+A missed call isn't a "no" — but we score it like one, and it never gets better on its own. People are stuck right now, today.
+
+## 3. Decisions we need from Helen
 
 | Decision | Our answer |
 |---|---|
@@ -14,17 +18,13 @@ If someone misses a call, we score it the same as them saying "no." There's no w
 | Fix stuck people (like Vesper) right away, not just going forward | Yes — same fix, applied once |
 | Who owns the lost-pay question | Engineering Manager + Support Lead |
 
-## 3. What other teams still need to do
+## 4. What other teams still need to do
 
 | Item | Who |
 |---|---|
 | Check the new rule makes sense | Staff Engineer |
 | Check it answers Wen's old question properly | Staff Engineer + Wen |
 | Build the real screens, once approved | Design / Engineering |
-
-## 4. The problem, and why now
-
-A missed call isn't a "no" — but we score it like one, and it never gets better on its own. People are stuck right now, today.
 
 ## 5. What we'd build
 
@@ -39,6 +39,8 @@ A missed call should count less than a real "no," and should fade away over time
 Dot also gets a quiet notice the moment a ping goes out for Vesper — not just her phone buzzing through the ceiling. That's something Dot asked for directly, not something we added on top.
 
 This is two separate things happening together: a one-time catch-up that fixes Vesper's score right now, and an ongoing change so future misses fade instead of sticking. Both show up in the click-through, labeled separately.
+
+**How we'll know it worked:** no responder's score sits near zero for more than 2 weeks without a visible way back.
 
 *(Click-through: `prototype.html`)*
 
