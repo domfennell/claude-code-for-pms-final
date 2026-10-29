@@ -620,7 +620,8 @@ function ensureAudioCtx(){
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
-let introNoise = null; // { src, filter, lfo, gain } — the looping scan-static, only while on the intro slide
+let introPlaying = false; // true only while the intro slide is showing and sound is on
+let introTimerId = null;  // the fragment scheduler's pending timeout
 
 function toggleSound(){
   audioEnabled = !audioEnabled;
@@ -635,49 +636,59 @@ function toggleSound(){
   }
 }
 
-// Continuous filtered white noise with a slow wobble, like scanning between stations — loops for as
-// long as you're on the intro slide, and nowhere else.
+// Fragmented dial-scanning sound: mostly short static bursts, occasionally interrupted by a brief
+// "caught a station" blip, scheduled back-to-back for as long as you're on the intro slide.
 function startIntroNoise(){
-  if (!audioEnabled || introNoise) return;
-  const ctx = ensureAudioCtx();
-  const loopSeconds = 2;
-  const size = Math.floor(ctx.sampleRate * loopSeconds);
-  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-
-  const src = ctx.createBufferSource();
-  src.buffer = buffer; src.loop = true;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'bandpass'; filter.frequency.value = 1700; filter.Q.value = 0.6;
-
-  const lfo = ctx.createOscillator();
-  lfo.frequency.value = 0.12; // slow drift, like re-tuning
-  const lfoGain = ctx.createGain();
-  lfoGain.gain.value = 850;
-  lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.35);
-
-  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-  src.start(); lfo.start();
-  introNoise = { src, filter, lfo, gain };
+  if (!audioEnabled || introPlaying) return;
+  introPlaying = true;
+  scheduleFragment();
 }
 
 function stopIntroNoise(){
-  if (!introNoise) return;
-  const { src, lfo, gain } = introNoise;
-  const ctx = audioCtx;
+  introPlaying = false;
+  if (introTimerId) { clearTimeout(introTimerId); introTimerId = null; }
+}
+
+function scheduleFragment(){
+  if (!introPlaying) return;
+  if (Math.random() < 0.3) playStationBlip(); else playStaticFragment();
+  introTimerId = setTimeout(scheduleFragment, 90 + Math.random() * 190);
+}
+
+function playStaticFragment(){
+  const ctx = ensureAudioCtx();
+  const duration = 0.1 + Math.random() * 0.16;
+  const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 1000 + Math.random() * 2000; filter.Q.value = 0.6;
+  const gain = ctx.createGain();
   const now = ctx.currentTime;
-  gain.gain.cancelScheduledValues(now);
-  gain.gain.setValueAtTime(gain.gain.value, now);
-  gain.gain.linearRampToValueAtTime(0, now + 0.2);
-  src.stop(now + 0.25);
-  lfo.stop(now + 0.25);
-  introNoise = null;
+  gain.gain.setValueAtTime(0.045, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+  src.start(now); src.stop(now + duration);
+}
+
+// A quick, generic tone snippet standing in for "briefly passing a station that's actually playing something."
+function playStationBlip(){
+  const ctx = ensureAudioCtx();
+  const now = ctx.currentTime;
+  const dur = 0.14 + Math.random() * 0.22;
+  const osc = ctx.createOscillator();
+  osc.type = Math.random() < 0.5 ? 'sine' : 'triangle';
+  const baseFreq = 200 + Math.random() * 500;
+  osc.frequency.setValueAtTime(baseFreq, now);
+  osc.frequency.linearRampToValueAtTime(baseFreq * (0.85 + Math.random() * 0.3), now + dur);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.055, now + 0.02);
+  gain.gain.linearRampToValueAtTime(0, now + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + dur + 0.02);
 }
 
 let current = 0;
