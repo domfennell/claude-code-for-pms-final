@@ -48,6 +48,9 @@ body{
 .topbar{ padding: 18px 18px 10px; position:relative; z-index:5; }
 .title-strip{ max-width: 980px; margin: 0 auto 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .brand{ color: var(--cyan); font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.14em; font-family:"Share Tech Mono",monospace; opacity:.9; }
+.sound-toggle{ font-family:"Share Tech Mono",monospace; font-size:11px; letter-spacing:.05em; background: rgba(255,255,255,0.04); color: var(--muted); border:1px solid rgba(255,255,255,0.2); padding:5px 12px; border-radius:3px; cursor:pointer; transition: all .15s ease; }
+.sound-toggle:hover{ border-color: var(--cyan); color: var(--cyan); }
+.sound-toggle.on{ background: rgba(45,212,191,0.15); border-color: var(--cyan); color: var(--cyan); box-shadow:0 0 10px rgba(45,212,191,0.35); }
 .brand .blip{ display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--cyan); margin-right:7px; box-shadow:0 0 8px var(--cyan); animation: blipPulse 1.6s ease-in-out infinite; }
 @keyframes blipPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
 
@@ -264,7 +267,10 @@ code.inline{ background: rgba(255,255,255,0.08); color: var(--cyan); padding:1px
 <div class="topbar">
   <div class="title-strip">
     <div class="brand"><span class="blip"></span>ROOK DISPATCH · RELEASE 4.2 REPORT</div>
-    <div class="brand" id="slide-tag">—</div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()">🔈 SOUND: OFF</button>
+      <div class="brand" id="slide-tag">—</div>
+    </div>
   </div>
   <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
   <div class="breadcrumb" id="breadcrumb"></div>
@@ -606,6 +612,69 @@ let's try a correlation exercise. Read every support ticket in Rook's database. 
   `},
 ];
 
+// ---------- Synthesized radio/dispatch sound effects (no audio files — generated on the fly) ----------
+let audioEnabled = false;
+let audioCtx = null;
+function ensureAudioCtx(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function toggleSound(){
+  audioEnabled = !audioEnabled;
+  const btn = document.getElementById('sound-toggle');
+  btn.textContent = audioEnabled ? '🔊 SOUND: ON' : '🔈 SOUND: OFF';
+  btn.classList.toggle('on', audioEnabled);
+  if (audioEnabled) {
+    ensureAudioCtx();
+    if (current === 0) playIntroSound();
+  }
+}
+function playNoiseBurst(duration, peakGain, filterFreq, filterType, delay){
+  const ctx = ensureAudioCtx();
+  const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filter = ctx.createBiquadFilter(); filter.type = filterType || 'bandpass'; filter.frequency.value = filterFreq || 1500;
+  const gain = ctx.createGain();
+  const now = ctx.currentTime + (delay || 0);
+  gain.gain.setValueAtTime(peakGain, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+  src.start(now); src.stop(now + duration);
+}
+function playTick(freqHz, delay){
+  const ctx = ensureAudioCtx();
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  const now = ctx.currentTime + delay;
+  osc.type = 'square'; osc.frequency.setValueAtTime(freqHz, now);
+  gain.gain.setValueAtTime(0.05, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + 0.07);
+}
+function playSquelch(delay){
+  playNoiseBurst(0.35, 0.16, 2500, 'highpass', delay);
+  const ctx = ensureAudioCtx();
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  const now = ctx.currentTime + delay;
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(1800, now);
+  osc.frequency.exponentialRampToValueAtTime(380, now + 0.3);
+  gain.gain.setValueAtTime(0.07, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + 0.36);
+}
+function playIntroSound(){
+  if (!audioEnabled) return;
+  playNoiseBurst(1.1, 0.06, 3000, 'bandpass', 0); // scanning static, fades with the visual
+  for (let i = 0; i < 5; i++) playTick(600 + i * 80, 0.15 + i * 0.22); // ticks matching the frequency readout
+  playSquelch(1.7); // matches the squelch flash in the visuals
+}
+
 let current = 0;
 
 function sectionInfo(idx){
@@ -676,6 +745,7 @@ function render(){
   protoAfter = false;
   renderProtoSlide();
   runFreqTicker();
+  if (current === 0) playIntroSound();
 }
 
 document.getElementById('prev-btn').onclick = ()=>{ if(current>0){ current--; render(); } };
