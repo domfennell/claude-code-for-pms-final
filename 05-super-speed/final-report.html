@@ -623,6 +623,7 @@ function ensureAudioCtx(){
 let introPlaying = false; // true only while the intro slide is showing and sound is on
 let introTimerId = null;  // the knob-twist scheduler's pending timeout
 let introNodes = null;    // { src, filter, gain } — the continuous noise bed
+let radioLineTimerId = null; // the operator-voice scheduler's pending timeout
 
 function toggleSound(){
   audioEnabled = !audioEnabled;
@@ -664,6 +665,46 @@ function startIntroNoise(){
   src.start();
   introNodes = { src, filter, gain };
   scheduleKnobTwist();
+  scheduleRadioLine(2000 + Math.random() * 800);
+}
+
+// A key-click burst — the sound a radio makes keying on/off — bracketing the operator's line.
+function playKeyClick(delay){
+  const ctx = ensureAudioCtx();
+  const duration = 0.035;
+  const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filter = ctx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 600;
+  const gain = ctx.createGain();
+  const now = ctx.currentTime + (delay || 0);
+  gain.gain.setValueAtTime(0.1, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+  src.start(now); src.stop(now + duration);
+}
+
+// A short operator call, bracketed by key-clicks — the only actual words on the channel.
+function speakRadioLine(){
+  if (!('speechSynthesis' in window)) return;
+  playKeyClick(0);
+  const utter = new SpeechSynthesisUtterance('Come in, Dispatch. Do you copy?');
+  utter.pitch = 0.75 + Math.random() * 0.15;
+  utter.rate = 1.05 + Math.random() * 0.1;
+  utter.volume = 0.85;
+  utter.onend = () => { if (introPlaying) playKeyClick(0.05); };
+  setTimeout(() => { if (introPlaying) window.speechSynthesis.speak(utter); }, 150);
+}
+
+function scheduleRadioLine(delay){
+  if (!introPlaying) return;
+  radioLineTimerId = setTimeout(() => {
+    if (!introPlaying) return;
+    speakRadioLine();
+    scheduleRadioLine(10000 + Math.random() * 2000);
+  }, delay);
 }
 
 function scheduleKnobTwist(){
@@ -681,6 +722,8 @@ function scheduleKnobTwist(){
 function stopIntroNoise(){
   introPlaying = false;
   if (introTimerId) { clearTimeout(introTimerId); introTimerId = null; }
+  if (radioLineTimerId) { clearTimeout(radioLineTimerId); radioLineTimerId = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   if (introNodes) {
     const { src, gain } = introNodes;
     const ctx = audioCtx;
