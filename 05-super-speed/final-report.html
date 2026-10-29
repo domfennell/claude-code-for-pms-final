@@ -435,8 +435,10 @@ const slides = [
     <div class="scope-note">ON PURPOSE, LEFT OUT HERE: sliders for the exact numbers (miss penalty, decay rate, floor) — out of scope for this view, so the decision stays on direction, not on tuning a formula.</div>
   `},
   { section:'fix', html:`
-    <h2 class="slide-title" style="margin-bottom:10px;">See it in action</h2>
-    <button class="toggle-btn" id="live-toggle" onclick="toggleProtoLive()" style="display:inline-block; margin:0 0 14px;">SHOW: AFTER THE FIX</button>
+    <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:10px; padding-right:185px;">
+      <h2 class="slide-title" style="margin-bottom:0;">See it in action</h2>
+      <button class="toggle-btn" id="live-toggle" onclick="toggleProtoLive()" style="margin:0; flex-shrink:0;">SHOW: AFTER THE FIX</button>
+    </div>
     <p class="sub">This is live — computed from Vesper's real ping history right here, not a picture of it. Click the button.</p>
     <div class="proto-preview">
       <div class="mini-card">
