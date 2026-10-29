@@ -621,7 +621,8 @@ function ensureAudioCtx(){
   return audioCtx;
 }
 let introPlaying = false; // true only while the intro slide is showing and sound is on
-let introTimerId = null;  // the fragment scheduler's pending timeout
+let introTimerId = null;  // the knob-twist scheduler's pending timeout
+let introNodes = null;    // { src, filter, gain } — the continuous noise bed
 
 function toggleSound(){
   audioEnabled = !audioEnabled;
@@ -636,70 +637,60 @@ function toggleSound(){
   }
 }
 
-// Fragmented dial-scanning sound: mostly short static bursts, occasionally interrupted by a brief
-// "caught a station" blip, scheduled back-to-back for as long as you're on the intro slide.
+// Continuous white noise, with the filter cutoff jumping around like a hand twisting a walkie-talkie
+// knob hunting for the right channel — no gaps, no clicks, just the texture shifting under your ear.
 function startIntroNoise(){
   if (!audioEnabled || introPlaying) return;
   introPlaying = true;
-  scheduleFragment();
+  const ctx = ensureAudioCtx();
+
+  const loopSeconds = 2;
+  const size = Math.floor(ctx.sampleRate * loopSeconds);
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+
+  const src = ctx.createBufferSource();
+  src.buffer = buffer; src.loop = true;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 1200; filter.Q.value = 0.7;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.065, ctx.currentTime + 0.3);
+
+  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+  src.start();
+  introNodes = { src, filter, gain };
+  scheduleKnobTwist();
+}
+
+function scheduleKnobTwist(){
+  if (!introPlaying || !introNodes) return;
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+  const targetFreq = 350 + Math.random() * 3200;
+  const rampTime = 0.18 + Math.random() * 0.4;
+  introNodes.filter.frequency.cancelScheduledValues(now);
+  introNodes.filter.frequency.setValueAtTime(introNodes.filter.frequency.value, now);
+  introNodes.filter.frequency.linearRampToValueAtTime(targetFreq, now + rampTime);
+  introTimerId = setTimeout(scheduleKnobTwist, rampTime * 1000 + 150 + Math.random() * 300);
 }
 
 function stopIntroNoise(){
   introPlaying = false;
   if (introTimerId) { clearTimeout(introTimerId); introTimerId = null; }
-}
-
-function scheduleFragment(){
-  if (!introPlaying) return;
-  if (Math.random() < 0.3) playStationBlip(); else playStaticFragment();
-  introTimerId = setTimeout(scheduleFragment, 90 + Math.random() * 190);
-}
-
-// Raw broadband hiss — a walkie-talkie's open-channel static, not a tuned "whistle."
-function playStaticFragment(){
-  const ctx = ensureAudioCtx();
-  const duration = 0.1 + Math.random() * 0.16;
-  const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
-  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource(); src.buffer = buffer;
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'highpass'; filter.frequency.value = 350; filter.Q.value = 0.4;
-  const gain = ctx.createGain();
-  const now = ctx.currentTime;
-  gain.gain.setValueAtTime(0.07, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-  src.start(now); src.stop(now + duration);
-}
-
-// A broken, gated burst of noise in the speech band — someone trying to get through on the
-// channel, chopped up by the static rather than a clean "radio station" tone.
-function playStationBlip(){
-  const ctx = ensureAudioCtx();
-  const now = ctx.currentTime;
-  const dur = 0.16 + Math.random() * 0.24;
-  const size = Math.max(1, Math.floor(ctx.sampleRate * dur));
-  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource(); src.buffer = buffer;
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'bandpass'; filter.frequency.value = 500 + Math.random() * 1200; filter.Q.value = 1.4;
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0, now);
-  // gate it on/off a few times across the burst, so it reads as broken-up speech, not a tone
-  const chops = 2 + Math.floor(Math.random() * 3);
-  for (let i = 0; i < chops; i++) {
-    const t0 = now + (dur / chops) * i;
-    const t1 = t0 + (dur / chops) * (0.45 + Math.random() * 0.3);
-    gain.gain.setValueAtTime(0, t0);
-    gain.gain.linearRampToValueAtTime(0.09, t0 + 0.01);
-    gain.gain.linearRampToValueAtTime(0, t1);
+  if (introNodes) {
+    const { src, gain } = introNodes;
+    const ctx = audioCtx;
+    const now = ctx.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.2);
+    src.stop(now + 0.25);
+    introNodes = null;
   }
-  src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-  src.start(now); src.stop(now + dur + 0.02);
 }
 
 let current = 0;
