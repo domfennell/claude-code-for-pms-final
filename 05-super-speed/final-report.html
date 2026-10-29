@@ -6,145 +6,237 @@
 <title>Release 4.2 — the fix, and how we found it</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Archivo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 :root{
-  --page:#1859b5; --panel:#ffffff; --ink:#0a1f44; --ink2:#1a2f54; --body-text:#111318;
-  --yellow:#ffd400; --orange:#ff6a00; --green:#0c9a53; --red:#d81e1e; --amber:#e08a00;
-  --muted:#5b6474; --dot: rgba(10,31,68,0.16); --shadow: var(--ink);
-  --chip-bg:#f1f1ef;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --page:#07142e; --panel:#15181f; --ink:#ffd400; --ink2:#ff6a00; --body-text:#f3f1e7;
-    --yellow:#ffd400; --orange:#ff6a00; --green:#36d08a; --red:#ff5a5a; --amber:#ffb43d;
-    --muted:#aeb3bf; --dot: rgba(255,212,0,0.14); --shadow:#000000;
-    --chip-bg:#1f232c;
-    color-scheme: dark;
-  }
+  --bg:#070a12; --bg2:#0a0e1a;
+  --panel: rgba(13,18,32,0.82);
+  --ink:#e8edf5; --muted:#8696ae;
+  --cyan:#2dd4bf; --cyan-dim: rgba(45,212,191,0.35);
+  --violet:#8b5cf6; --amber:#ffb020; --amber-dim: rgba(255,176,32,0.35);
+  --red:#ff5a5a; --green:#34d399;
+  --glass-border: rgba(45,212,191,0.4);
 }
 * { box-sizing: border-box; }
 html,body { height: 100%; }
 body{
   margin:0;
-  font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  color: var(--body-text);
-  background-color: var(--page);
-  background-image: radial-gradient(circle, var(--dot) 1.6px, transparent 1.8px);
-  background-size: 16px 16px;
+  font-family:"Rajdhani",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color: var(--ink);
+  background: var(--bg);
   min-height: 100vh;
   display:flex;
   flex-direction:column;
-  padding-bottom: 96px; /* room for the fixed nav bar, so it never overlaps the footer */
+  padding-bottom: 96px;
+  position:relative;
+  overflow-x:hidden;
 }
-.bangers{ font-family:"Bangers","Archivo",sans-serif; letter-spacing:.5px; }
+.mono{ font-family:"Share Tech Mono",monospace; }
 
-.topbar{ padding: 18px 18px 10px; }
+/* ---------- Aurora + scanline ambient background ---------- */
+.aurora{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.aurora span{ position:absolute; border-radius:50%; filter: blur(70px); opacity:.35; mix-blend-mode: screen; }
+.aurora .a1{ width:60vw; height:60vw; left:-15vw; top:-20vw; background: var(--cyan); animation: drift1 26s ease-in-out infinite; }
+.aurora .a2{ width:50vw; height:50vw; right:-18vw; top:10vh; background: var(--violet); animation: drift2 32s ease-in-out infinite; }
+.aurora .a3{ width:45vw; height:45vw; left:20vw; bottom:-20vh; background: var(--amber); opacity:.22; animation: drift3 38s ease-in-out infinite; }
+@keyframes drift1{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(6vw,8vh) scale(1.15); } }
+@keyframes drift2{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(-8vw,6vh) scale(1.1); } }
+@keyframes drift3{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(5vw,-6vh) scale(1.2); } }
+.scanlines{ position:fixed; inset:0; z-index:1; pointer-events:none; background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 3px); opacity:.5; }
+.vignette{ position:fixed; inset:0; z-index:1; pointer-events:none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%); }
+
+.topbar{ padding: 18px 18px 10px; position:relative; z-index:5; }
 .title-strip{ max-width: 980px; margin: 0 auto 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.brand{ color:#fff; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; opacity:.85; }
-.progress-track{ max-width:980px; margin:0 auto 14px; height:8px; background:rgba(255,255,255,0.25); border-radius:99px; border:2px solid rgba(255,255,255,0.4); overflow:hidden; }
-.progress-fill{ height:100%; background: var(--yellow); border-radius:99px; transition: width .25s ease; }
+.brand{ color: var(--cyan); font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.14em; font-family:"Share Tech Mono",monospace; opacity:.9; }
+.brand .blip{ display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--cyan); margin-right:7px; box-shadow:0 0 8px var(--cyan); animation: blipPulse 1.6s ease-in-out infinite; }
+@keyframes blipPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
+
+.progress-track{ max-width:980px; margin:0 auto 14px; height:7px; background: rgba(255,255,255,0.06); border:1px solid rgba(45,212,191,0.3); border-radius:3px; overflow:hidden; position:relative; }
+.progress-track::after{ content:""; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,0.05) 18px 19px); }
+.progress-fill{ height:100%; background: linear-gradient(90deg, var(--cyan), #7df9e8); box-shadow:0 0 10px var(--cyan); transition: width .3s ease; }
+
 .breadcrumb{ max-width:980px; margin:0 auto; display:flex; gap:8px; flex-wrap:wrap; }
-.crumb{ font-family:"Archivo",sans-serif; font-weight:800; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:7px 14px; border-radius:999px; border:2.5px solid var(--ink); background: var(--chip-bg); color: var(--ink); cursor:pointer; user-select:none; transition: transform .12s ease; }
-.crumb:hover{ transform: translateY(-1px); }
-.crumb.active{ background: var(--orange); color:#fff; border-color: var(--ink); box-shadow: 3px 3px 0 var(--shadow); }
-.crumb.done{ background: var(--green); color:#fff; }
+.crumb{
+  font-family:"Share Tech Mono",monospace; font-weight:400; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  padding:7px 16px; background: rgba(255,255,255,0.04); color: var(--muted); border:1px solid rgba(255,255,255,0.14);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  cursor:pointer; user-select:none; transition: all .15s ease;
+}
+.crumb:hover{ border-color: var(--cyan); color:#fff; }
+.crumb.active{ background: rgba(45,212,191,0.15); color: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 14px rgba(45,212,191,0.35); }
+.crumb.done{ background: rgba(52,211,153,0.1); color: var(--green); border-color: rgba(52,211,153,0.4); }
 
-.stage-wrap{ flex:1; display:flex; align-items:center; justify-content:center; padding: 10px 18px 14px; }
-.panel{ width:100%; max-width: 920px; height: min(560px, 64vh); background: var(--panel); border: 4px solid var(--ink); border-radius: 20px; box-shadow: 10px 10px 0 var(--shadow); padding: 34px 36px; position:relative; overflow-y:auto; overflow-x:hidden; }
-.subcounter{ position:absolute; top:16px; right:20px; font-size:11.5px; font-weight:800; color: var(--muted); background: var(--chip-bg); border:2px solid var(--ink); border-radius:999px; padding:4px 11px; }
+.stage-wrap{ flex:1; display:flex; align-items:center; justify-content:center; padding: 10px 18px 14px; position:relative; z-index:5; }
+.panel{
+  width:100%; max-width: 920px; height: min(560px, 64vh);
+  background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border); border-radius: 6px;
+  box-shadow: 0 0 50px rgba(45,212,191,0.12), inset 0 0 60px rgba(0,0,0,0.3);
+  padding: 34px 36px; position:relative; overflow-y:auto; overflow-x:hidden;
+}
+.hud-corner{ position:absolute; width:22px; height:22px; border: 2px solid var(--cyan); opacity:.75; pointer-events:none; }
+.hud-corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+.hud-corner.tr{ top:-1px; right:-1px; border-left:none; border-bottom:none; }
+.hud-corner.bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
+.hud-corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+.subcounter{ position:absolute; top:16px; right:20px; font-family:"Share Tech Mono",monospace; font-size:11px; color: var(--cyan); background: rgba(45,212,191,0.08); border:1px solid var(--cyan-dim); border-radius:3px; padding:4px 11px; letter-spacing:.04em; }
 .section-dots{ position:absolute; top:46px; right:20px; display:flex; gap:7px; align-items:center; }
-.section-dots .dot{ width:13px; height:13px; border-radius:50%; border:2.5px solid var(--ink); background: var(--panel); cursor:pointer; padding:0; transition: transform .1s ease; }
-.section-dots .dot:hover{ transform: scale(1.15); }
-.section-dots .dot.filled{ background: var(--green); }
-.section-dots .dot.current{ width:17px; height:17px; background: var(--orange); box-shadow: 0 0 0 3px var(--yellow); cursor:default; }
-.section-dots .dot.current:hover{ transform:none; }
+.section-dots .dot{ width:9px; height:9px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.3); background: transparent; cursor:pointer; padding:0; transition: all .15s ease; }
+.section-dots .dot:hover{ border-color: var(--cyan); }
+.section-dots .dot.filled{ background: var(--green); border-color: var(--green); }
+.section-dots .dot.current{ width:11px; height:11px; background: var(--cyan); border-color: var(--cyan); box-shadow:0 0 8px var(--cyan); animation: blipPulse 1.4s ease-in-out infinite; cursor:default; }
 
-.navbar-fixed{ position:fixed; left:0; right:0; bottom:0; z-index:20; background: var(--page); border-top: 3px solid rgba(255,255,255,0.25); box-shadow: 0 -4px 14px rgba(0,0,0,0.2); }
+.navbar-fixed{ position:fixed; left:0; right:0; bottom:0; z-index:20; background: rgba(7,10,18,0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--glass-border); box-shadow: 0 -8px 24px rgba(0,0,0,0.4); }
 .navbar{ max-width:980px; margin: 0 auto; padding: 14px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
-.nav-btn{ font-family:"Archivo",sans-serif; font-weight:900; font-size:15px; letter-spacing:.02em; background: var(--yellow); color: var(--ink); border:3px solid var(--ink); border-radius:12px; padding:12px 24px; cursor:pointer; box-shadow:5px 5px 0 var(--shadow); transition: transform .08s ease, box-shadow .08s ease; }
-.nav-btn:active{ transform: translate(3px,3px); box-shadow:2px 2px 0 var(--shadow); }
-.nav-btn:disabled{ opacity:.35; cursor:not-allowed; box-shadow:none; }
-.nav-count{ color:#fff; font-weight:800; font-size:13px; opacity:.9; }
+.nav-btn{
+  font-family:"Share Tech Mono",monospace; font-weight:400; font-size:13.5px; letter-spacing:.06em; text-transform:uppercase;
+  background: rgba(45,212,191,0.08); color: var(--cyan); border:1px solid var(--cyan); padding:11px 24px; cursor:pointer;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  transition: all .12s ease;
+}
+.nav-btn:hover:not(:disabled){ background: rgba(45,212,191,0.2); box-shadow:0 0 14px rgba(45,212,191,0.4); }
+.nav-btn:active:not(:disabled){ transform: scale(.97); }
+.nav-btn:disabled{ opacity:.25; cursor:not-allowed; }
+.nav-count{ color: var(--muted); font-family:"Share Tech Mono",monospace; font-size:12px; letter-spacing:.05em; }
 
-h1.slide-title{ font-size: clamp(26px, 4vw, 38px); color: var(--ink); margin: 0 0 14px; line-height:1.08; }
-h2.slide-title{ font-size: clamp(22px, 3.2vw, 30px); color: var(--ink); margin: 0 0 14px; }
+h1.slide-title{ font-size: clamp(24px, 3.6vw, 34px); font-weight:700; color:#fff; margin: 0 0 14px; line-height:1.15; letter-spacing:.01em; }
+h2.slide-title{ font-size: clamp(20px, 3vw, 27px); font-weight:700; color:#fff; margin: 0 0 14px; letter-spacing:.01em; }
 p.sub{ color: var(--muted); font-size:14.5px; margin:0 0 20px; max-width:640px; }
 .stamp-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
-.stamp{ font-weight:800; font-size:12.5px; color:#fff; background: var(--ink2); border:2px solid var(--ink); border-radius:999px; padding:6px 14px; transform: rotate(-2deg); }
-.stamp:nth-child(2n){ transform: rotate(2deg); background: var(--red); }
-.stamp:nth-child(3n){ background: var(--green); }
+.stamp{
+  font-family:"Share Tech Mono",monospace; font-weight:400; font-size:11.5px; letter-spacing:.05em; color: var(--cyan);
+  background: rgba(45,212,191,0.07); border:1px solid var(--cyan-dim); padding:6px 14px;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
 
 .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media (max-width:680px){ .grid2{ grid-template-columns:1fr; } }
-.comic-panel{ background: var(--chip-bg); border:3px solid var(--ink); border-radius:14px; padding:16px 18px; position:relative; }
-.comic-panel .frame-no{ position:absolute; top:-12px; left:-12px; width:30px; height:30px; border-radius:50%; background: var(--orange); border:3px solid var(--ink); color:#fff; font-family:"Bangers"; font-size:16px; display:flex; align-items:center; justify-content:center; }
-.comic-panel h4{ margin:4px 0 8px; font-size:15.5px; color: var(--ink); }
-.comic-panel p{ margin:0; font-size:13.5px; color: var(--body-text); line-height:1.5; }
-.comic-panel code{ background:rgba(0,0,0,0.08); padding:1px 5px; border-radius:4px; font-size:12px; }
+.comic-panel{ background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-left: 3px solid var(--cyan); padding:16px 18px; position:relative; }
+.comic-panel .frame-no{ position:absolute; top:10px; right:12px; font-family:"Share Tech Mono",monospace; font-size:11px; color: var(--cyan); opacity:.6; }
+.comic-panel h4{ margin:4px 24px 8px 0; font-size:15.5px; color:#fff; font-weight:700; }
+.comic-panel p{ margin:0; font-size:13.5px; color: var(--muted); line-height:1.55; }
+.comic-panel code{ background:rgba(255,255,255,0.08); color: var(--cyan); padding:1px 5px; border-radius:3px; font-size:12px; font-family:"Share Tech Mono",monospace; }
 .loop-caption, .chart-caption{ font-size:12.5px; color: var(--muted); text-align:center; margin-top:12px; max-width:480px; margin-left:auto; margin-right:auto; }
 
 .module-head{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
-.issue-no{ width:58px; height:58px; border-radius:50%; background: var(--orange); border:4px solid var(--ink); color:#fff; font-family:"Bangers"; font-size:26px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.module-head h2{ margin:0; font-size:24px; color: var(--ink); }
-.finding-box{ background: var(--yellow); border:3px solid var(--ink); border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:14px; color:#201700; font-weight:600; }
-.finding-tag{ display:inline-block; font-family:"Bangers"; font-size:13px; letter-spacing:.5px; background: var(--ink); color:#fff; padding:2px 10px; border-radius:6px; margin-bottom:6px; }
-.prompt-tag{ font-weight:800; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color: var(--muted); margin:0 0 8px; }
-.speech-bubble{ position:relative; background: var(--ink); color:#e9edff; border:3px solid var(--ink); border-radius:14px; padding:14px 16px; font-family:"SF Mono","Courier New",monospace; font-size:12.5px; line-height:1.6; white-space:pre-wrap; }
-.speech-bubble::after{ content:""; position:absolute; left:28px; bottom:-14px; width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-top:14px solid var(--ink); }
+.issue-no{ width:50px; height:50px; border:1.5px solid var(--cyan); color: var(--cyan); font-family:"Share Tech Mono",monospace; font-size:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background: rgba(45,212,191,0.06); clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); }
+.module-head h2{ margin:0; font-size:22px; color:#fff; font-weight:700; }
+.finding-box{ background: rgba(255,176,32,0.08); border:1px solid var(--amber-dim); border-left:3px solid var(--amber); border-radius:4px; padding:12px 14px; margin-bottom:16px; font-size:13.5px; color:#f3deb0; font-weight:500; line-height:1.5; }
+.finding-tag{ display:inline-block; font-family:"Share Tech Mono",monospace; font-size:11px; letter-spacing:.1em; color: var(--amber); margin-bottom:6px; }
+.prompt-tag{ font-family:"Share Tech Mono",monospace; font-weight:400; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color: var(--muted); margin:0 0 8px; display:flex; align-items:center; gap:7px; }
+.prompt-tag::before{ content:""; width:7px; height:7px; border-radius:50%; background: var(--red); box-shadow:0 0 6px var(--red); animation: blipPulse 1.1s ease-in-out infinite; }
+.speech-bubble{ position:relative; background: rgba(0,0,0,0.35); color:#cdebe6; border:1px solid rgba(45,212,191,0.3); border-left:3px solid var(--cyan); border-radius:3px; padding:14px 16px; font-family:"Share Tech Mono",monospace; font-size:12.5px; line-height:1.65; white-space:pre-wrap; }
 .empty-note{ font-style:italic; color: var(--muted); }
 
-.fix-callout{ background: var(--green); color:#fff; border:3px solid var(--ink); border-radius:12px; padding:14px 16px; font-weight:700; font-size:14px; margin-bottom:18px; }
+.fix-callout{ background: rgba(52,211,153,0.08); color:#bdf5de; border:1px solid rgba(52,211,153,0.4); border-left:3px solid var(--green); border-radius:4px; padding:14px 16px; font-weight:600; font-size:13.5px; margin-bottom:18px; line-height:1.5; }
 .fix-points{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
 @media (max-width:680px){ .fix-points{ grid-template-columns:repeat(2,1fr); } }
-.fix-point{ background: var(--chip-bg); border:2.5px solid var(--ink); border-radius:12px; padding:12px 8px; text-align:center; }
-.fix-point .emoji{ font-size:22px; display:block; margin-bottom:4px; }
-.fix-point .label{ font-size:11.5px; font-weight:700; color: var(--ink); }
-.scope-note{ font-size:12.5px; color: var(--muted); text-align:center; border:2px dashed var(--muted); border-radius:10px; padding:10px 14px; }
+.fix-point{ background: rgba(255,255,255,0.03); border:1px solid rgba(45,212,191,0.25); padding:12px 8px; text-align:center; clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); }
+.fix-point .emoji{ font-size:20px; display:block; margin-bottom:5px; filter: grayscale(.2); }
+.fix-point .label{ font-size:11px; font-weight:600; color: var(--ink); font-family:"Share Tech Mono",monospace; letter-spacing:.01em; }
+.scope-note{ font-size:12px; color: var(--muted); text-align:center; border:1px dashed rgba(255,255,255,0.2); border-radius:4px; padding:10px 14px; font-family:"Share Tech Mono",monospace; }
 
 .proto-preview{ display:grid; grid-template-columns:1.3fr .9fr; gap:16px; margin: 16px 0; }
 @media (max-width:680px){ .proto-preview{ grid-template-columns:1fr; } }
-.mini-card{ background: var(--chip-bg); border:3px solid var(--ink); border-radius:14px; padding:16px; }
-.mini-head{ font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color: var(--muted); margin:0 0 12px; }
+.mini-card{ background: rgba(255,255,255,0.03); border:1px solid rgba(45,212,191,0.25); padding:16px; }
+.mini-head{ font-size:11px; font-family:"Share Tech Mono",monospace; text-transform:uppercase; letter-spacing:.08em; color: var(--muted); margin:0 0 12px; }
 .pp-row{ display:flex; align-items:center; gap:10px; }
-.pp-avatar{ width:36px; height:36px; border-radius:50%; background: var(--orange); border:2px solid var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; }
-.pp-name{ font-weight:800; font-size:14.5px; color: var(--ink); }
+.pp-avatar{ width:34px; height:34px; border:1.5px solid var(--cyan); color: var(--cyan); background: rgba(45,212,191,0.08); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:"Share Tech Mono",monospace; }
+.pp-name{ font-weight:700; font-size:14.5px; color:#fff; }
 .pp-area{ font-size:12px; color: var(--muted); }
-.pp-chip{ margin-left:auto; background: var(--green); color:#fff; border:2px solid var(--ink); font-weight:800; font-size:11px; padding:3px 9px; border-radius:999px; visibility:hidden; }
+.pp-chip{ margin-left:auto; background: rgba(52,211,153,0.15); color: var(--green); border:1px solid var(--green); font-weight:600; font-size:10.5px; font-family:"Share Tech Mono",monospace; padding:3px 9px; visibility:hidden; letter-spacing:.04em; }
 .pp-chip.show{ visibility:visible; }
-.pp-score{ font-size:11.5px; color: var(--muted); margin-top:6px; font-weight:700; }
-.pp-phone{ width:150px; margin:0 auto; border:6px solid var(--ink); border-radius:24px; background:#fafbfe; padding:18px 10px 10px; position:relative; min-height:140px; }
-.pp-phone::before{ content:""; position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:8px; background: var(--ink); border-radius:5px; }
-.pp-callout{ background: var(--yellow); border-radius:8px; padding:8px; font-size:10.5px; font-weight:700; margin-bottom:7px; color:#201700; display:none; }
+.pp-score{ font-size:11px; color: var(--muted); margin-top:6px; font-weight:600; font-family:"Share Tech Mono",monospace; }
+.pp-phone{ width:150px; margin:0 auto; border:4px solid rgba(255,255,255,0.25); border-radius:18px; background: rgba(0,0,0,0.4); padding:18px 10px 10px; position:relative; min-height:140px; }
+.pp-phone::before{ content:""; position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:6px; background: rgba(255,255,255,0.25); border-radius:5px; }
+.pp-callout{ background: rgba(255,176,32,0.12); border:1px solid var(--amber-dim); border-radius:4px; padding:8px; font-size:10.5px; font-weight:600; margin-bottom:7px; color:#f3deb0; display:none; }
 .pp-callout.show{ display:block; }
-.pp-quiet{ font-size:10.5px; color: var(--muted); text-align:center; margin-top:30px; }
+.pp-quiet{ font-size:10.5px; color: var(--muted); text-align:center; margin-top:30px; font-family:"Share Tech Mono",monospace; }
 .pp-quiet.hide{ display:none; }
-.pp-note{ background: var(--green); color:#fff; border-radius:8px; padding:8px; font-size:9.5px; line-height:1.4; display:none; }
+.pp-note{ background: rgba(52,211,153,0.12); color:#bdf5de; border:1px solid rgba(52,211,153,0.4); border-radius:4px; padding:8px; font-size:9.5px; line-height:1.4; display:none; }
 .pp-note.show{ display:block; }
-.open-btn{ display:block; text-align:center; background: var(--red); color:#fff; text-decoration:none; font-weight:900; font-size:15px; padding:13px 18px; border-radius:12px; border:3px solid var(--ink); box-shadow:5px 5px 0 var(--shadow); }
-.toggle-btn{ display:block; margin:0 auto 18px; font-family:"Archivo",sans-serif; font-weight:900; font-size:14px; background: var(--yellow); color: var(--ink); border:3px solid var(--ink); border-radius:999px; padding:10px 22px; cursor:pointer; box-shadow:4px 4px 0 var(--shadow); }
-.toggle-btn:active{ transform: translate(2px,2px); box-shadow:2px 2px 0 var(--shadow); }
+.open-btn{
+  display:block; text-align:center; background: rgba(255,90,90,0.1); color: var(--red); text-decoration:none; font-weight:600;
+  font-family:"Share Tech Mono",monospace; font-size:13.5px; letter-spacing:.04em; text-transform:uppercase; padding:13px 18px;
+  border:1px solid var(--red); clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+}
+.open-btn:hover{ background: rgba(255,90,90,0.2); box-shadow:0 0 14px rgba(255,90,90,0.3); }
+.toggle-btn{
+  display:block; margin:0 auto 18px; font-family:"Share Tech Mono",monospace; font-weight:400; font-size:13px; letter-spacing:.05em; text-transform:uppercase;
+  background: rgba(45,212,191,0.1); color: var(--cyan); border:1px solid var(--cyan); padding:10px 22px; cursor:pointer;
+  clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+}
+.toggle-btn:hover{ background: rgba(45,212,191,0.22); box-shadow:0 0 12px rgba(45,212,191,0.35); }
+.toggle-btn:active{ transform: scale(.97); }
 
 .skill-checks{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0; }
 @media (max-width:680px){ .skill-checks{ grid-template-columns:1fr; } }
-.skill-check{ display:flex; gap:8px; align-items:flex-start; background: var(--chip-bg); border:2.5px solid var(--ink); border-radius:10px; padding:10px 12px; }
-.skill-check .tick{ color: var(--green); font-weight:900; font-size:16px; }
-.skill-check b{ display:block; font-size:13px; color: var(--ink); margin-bottom:2px; }
-.skill-check span.t{ font-size:12px; color: var(--body-text); }
-.skill-note{ font-size:12.5px; color: var(--muted); border:2px dashed var(--muted); border-radius:10px; padding:12px 14px; margin-top:10px; }
+.skill-check{ display:flex; gap:8px; align-items:flex-start; background: rgba(255,255,255,0.03); border:1px solid rgba(45,212,191,0.2); padding:10px 12px; }
+.skill-check .tick{ color: var(--green); font-weight:900; font-size:15px; }
+.skill-check b{ display:block; font-size:13px; color:#fff; margin-bottom:2px; font-weight:700; }
+.skill-check span.t{ font-size:12px; color: var(--muted); }
+.skill-note{ font-size:12px; color: var(--muted); border:1px dashed rgba(255,255,255,0.2); border-radius:4px; padding:12px 14px; margin-top:10px; font-family:"Share Tech Mono",monospace; line-height:1.6; }
 
 .end-wrap{ text-align:center; padding-top:40px; }
-.end-wrap .bangers{ font-size: clamp(40px,7vw,64px); color: var(--red); -webkit-text-stroke: 2px var(--ink); text-shadow:5px 5px 0 var(--yellow); }
+.end-wrap .signoff{ font-family:"Share Tech Mono",monospace; font-size: clamp(28px,5vw,42px); color: var(--cyan); letter-spacing:.15em; text-shadow:0 0 24px rgba(45,212,191,0.6); }
 
-footer{ text-align:center; color:#dfe6ff; font-size:11.5px; padding: 10px 18px 26px; opacity:.85; }
-code.inline{ background: rgba(0,0,0,0.08); padding:1px 6px; border-radius:4px; font-size:12px; }
+footer{ text-align:center; color: var(--muted); font-size:11px; font-family:"Share Tech Mono",monospace; padding: 10px 18px 26px; opacity:.7; position:relative; z-index:5; }
+code.inline{ background: rgba(255,255,255,0.08); color: var(--cyan); padding:1px 6px; border-radius:3px; font-size:12px; font-family:"Share Tech Mono",monospace; }
+
+/* ---------- Intro: dispatch-radio tuning sequence ---------- */
+.intro-seq{ position:relative; min-height: 220px; }
+.intro-static{
+  position:absolute; inset:0; z-index:1;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.08) 0px, transparent 1px, transparent 3px),
+              repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, transparent 2px, transparent 5px);
+  animation: staticFade 2.2s ease-out forwards, staticFlicker .09s steps(2) infinite;
+}
+@keyframes staticFade{ 0%{ opacity:.9; } 70%{ opacity:.5; } 100%{ opacity:0; pointer-events:none; } }
+@keyframes staticFlicker{ 0%{ transform: translateY(0); } 100%{ transform: translateY(-2px); } }
+
+.freq-readout{
+  position:relative; z-index:2; font-family:"Share Tech Mono",monospace; color: var(--cyan); font-size: clamp(22px,4vw,30px);
+  letter-spacing:.1em; text-align:center; opacity:0; margin-bottom:8px;
+  animation: freqShow .25s ease .15s forwards, freqTick 1.5s steps(1) .15s forwards;
+}
+@keyframes freqShow{ to{ opacity:1; } }
+.freq-label{ position:relative; z-index:2; font-family:"Share Tech Mono",monospace; color: var(--muted); font-size:11px; letter-spacing:.2em; text-align:center; text-transform:uppercase; opacity:0; animation: freqShow .25s ease .15s forwards; margin-bottom:12px; }
+
+.squelch{
+  position:absolute; left:50%; top:46%; width:4px; height:4px; z-index:3; pointer-events:none;
+  background: radial-gradient(circle, #fff 0%, var(--cyan) 35%, transparent 70%);
+  transform: translate(-50%,-50%); opacity:0;
+  animation: squelchBurst .45s ease 1.7s forwards;
+}
+@keyframes squelchBurst{
+  0%{ width:4px; height:4px; opacity:0; }
+  15%{ opacity:1; }
+  60%{ width:900px; height:900px; opacity:.5; }
+  100%{ width:1400px; height:1400px; opacity:0; }
+}
+
+.intro-title-wrap{ position:relative; z-index:2; text-align:center; opacity:0; animation: titleIn .5s ease 1.85s forwards; }
+@keyframes titleIn{ 0%{ opacity:0; transform: scale(.96); } 60%{ opacity:1; } 100%{ opacity:1; transform: scale(1); } }
+.intro-title{
+  font-family:"Rajdhani",sans-serif; font-weight:700; font-size: clamp(22px,3.6vw,32px); color:#fff; margin:0 0 4px;
+  letter-spacing:.01em; line-height:1.15; text-shadow: 0 0 30px rgba(45,212,191,0.5);
+}
+.intro-callsign{ font-family:"Share Tech Mono",monospace; color: var(--cyan); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase; margin-bottom:10px; }
+.intro-sub{ opacity:0; animation: fadeUp .6s ease 2.25s forwards; }
+.intro-stamps{ opacity:0; animation: fadeUp .6s ease 2.5s forwards; }
+@keyframes fadeUp{ 0%{ opacity:0; transform: translateY(8px); } 100%{ opacity:1; transform: translateY(0); } }
 </style>
 </head>
 <body>
 
+<div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
 <div class="topbar">
   <div class="title-strip">
-    <div class="brand">Rook Dispatch · Release 4.2 Report</div>
+    <div class="brand"><span class="blip"></span>ROOK DISPATCH · RELEASE 4.2 REPORT</div>
     <div class="brand" id="slide-tag">—</div>
   </div>
   <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
@@ -153,6 +245,7 @@ code.inline{ background: rgba(0,0,0,0.08); padding:1px 6px; border-radius:4px; f
 
 <div class="stage-wrap">
   <div class="panel" id="panel">
+    <span class="hud-corner tl"></span><span class="hud-corner tr"></span><span class="hud-corner bl"></span><span class="hud-corner br"></span>
     <span class="subcounter" id="subcounter" style="display:none;"></span>
     <div class="section-dots" id="section-dots" style="display:none;"></div>
     <div id="slide-content"></div>
@@ -161,13 +254,13 @@ code.inline{ background: rgba(0,0,0,0.08); padding:1px 6px; border-radius:4px; f
 
 <div class="navbar-fixed">
   <div class="navbar">
-    <button class="nav-btn" id="prev-btn">← Previous</button>
+    <button class="nav-btn" id="prev-btn">◄ PREV</button>
     <div class="nav-count" id="nav-count"></div>
-    <button class="nav-btn" id="next-btn">Next →</button>
+    <button class="nav-btn" id="next-btn">NEXT ►</button>
   </div>
 </div>
 
-<footer>Rook Industries is a fictional teaching scenario, Product School's "Claude Code for PMs" course.</footer>
+<footer>ROOK INDUSTRIES — FICTIONAL TEACHING SCENARIO — PRODUCT SCHOOL "CLAUDE CODE FOR PMs"</footer>
 
 <script>
 // ---------- Vesper's real ping history (for the live prototype preview) ----------
@@ -225,15 +318,15 @@ function renderProtoSlide(){
   const span = (end-start)/86400000, W=300, H=44;
   const pts = trace.map(p=>{ const x=((p.t-start)/86400000)/span*W; const y=(1-p.score)*(H-8)+4; return [x,y]; });
   const line = pts.map(p=>p.join(',')).join(' ');
-  svg.innerHTML = `<line x1="0" y1="${(0.5*(H-8)+4).toFixed(1)}" x2="${W}" y2="${(0.5*(H-8)+4).toFixed(1)}" stroke="#c9ccd6" stroke-dasharray="4,4"/>
-    <polyline points="${line}" fill="none" stroke="${protoAfter?'#0c9a53':'#d81e1e'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg.innerHTML = `<line x1="0" y1="${(0.5*(H-8)+4).toFixed(1)}" x2="${W}" y2="${(0.5*(H-8)+4).toFixed(1)}" stroke="rgba(255,255,255,0.15)" stroke-dasharray="4,4"/>
+    <polyline points="${line}" fill="none" stroke="${protoAfter?'#34d399':'#ff5a5a'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px ${protoAfter?'#34d399':'#ff5a5a'})"/>`;
   const final = trace[trace.length-1].score;
   document.getElementById('live-score').textContent = `score: ${final.toFixed(2)} (0.5 = neutral)`;
   document.getElementById('live-chip').classList.toggle('show', protoAfter);
   document.getElementById('live-quiet').classList.toggle('hide', protoAfter);
   document.getElementById('live-callout').classList.toggle('show', protoAfter);
   document.getElementById('live-note').classList.toggle('show', protoAfter);
-  document.getElementById('live-toggle').textContent = protoAfter ? "Show: today's rule" : "Show: after the fix";
+  document.getElementById('live-toggle').textContent = protoAfter ? "SHOW: TODAY'S RULE" : "SHOW: AFTER THE FIX";
 }
 function toggleProtoLive(){ protoAfter = !protoAfter; renderProtoSlide(); }
 
@@ -249,11 +342,18 @@ const SECTIONS = [
 const slides = [
   // ---------- INTRO ----------
   { section:'intro', html:`
-    <h1 class="slide-title bangers" style="font-size:clamp(28px,4.6vw,42px); color:var(--yellow); -webkit-text-stroke:1.5px var(--ink); text-shadow:4px 4px 0 var(--ink);">
-      Release 4.2 quietly broke four responders — here's the fix, live.
-    </h1>
-    <p class="sub" style="font-size:15.5px; max-width:680px;">What I'd do about it, shown working on real data — then how I found it, and the skill that stops it happening quietly again.</p>
-    <div class="stamp-row">
+    <div class="intro-seq">
+      <div class="intro-static"></div>
+      <div class="freq-label">SCANNING FOR SIGNAL</div>
+      <div class="freq-readout" id="freq-readout">088.1 FM</div>
+      <span class="squelch"></span>
+      <div class="intro-title-wrap">
+        <div class="intro-callsign">INCOMING — ROOK DISPATCH CHANNEL 104.2</div>
+        <h1 class="intro-title">Release 4.2 quietly broke four responders.<br>Here's the fix, live.</h1>
+      </div>
+    </div>
+    <p class="sub intro-sub" style="font-size:15px; max-width:680px; text-align:center; margin:4px auto 0;">What I'd do about it, shown working on real data — then how I found it, and the skill that stops it happening quietly again.</p>
+    <div class="stamp-row intro-stamps" style="justify-content:center;">
       <span class="stamp">6 SESSIONS</span>
       <span class="stamp">147 TICKETS READ</span>
       <span class="stamp">1 ROOT CAUSE</span>
@@ -263,7 +363,7 @@ const slides = [
 
   // ---------- THE FIX (leads) ----------
   { section:'fix', html:`
-    <h2 class="slide-title bangers">What I'd do about it</h2>
+    <h2 class="slide-title">What I'd do about it</h2>
     <p class="sub">Not a setting — a change to the scoring mechanism, checked against three real stuck responders plus one real control case.</p>
     <div class="fix-callout">Built from the brief Helen (Director of Product) asked for: something a handler would notice, and something a quiet responder would feel differently about — not a quietly flipped number.</div>
     <div class="fix-points">
@@ -272,12 +372,12 @@ const slides = [
       <div class="fix-point"><span class="emoji">🪜</span><span class="label">No floor with no way out</span></div>
       <div class="fix-point"><span class="emoji">⚡</span><span class="label">Stuck responders caught up now</span></div>
     </div>
-    <div class="scope-note">On purpose, left out here: sliders for the exact numbers (miss penalty, decay rate, floor) — out of scope for this view, so the decision stays on direction, not on tuning a formula.</div>
+    <div class="scope-note">ON PURPOSE, LEFT OUT HERE: sliders for the exact numbers (miss penalty, decay rate, floor) — out of scope for this view, so the decision stays on direction, not on tuning a formula.</div>
   `},
   { section:'fix', html:`
-    <h2 class="slide-title bangers">See it in action</h2>
+    <h2 class="slide-title">See it in action</h2>
     <p class="sub">This is live — computed from Vesper's real ping history right here, not a picture of it. Click the button.</p>
-    <button class="toggle-btn" id="live-toggle" onclick="toggleProtoLive()">Show: after the fix</button>
+    <button class="toggle-btn" id="live-toggle" onclick="toggleProtoLive()">SHOW: AFTER THE FIX</button>
     <div class="proto-preview">
       <div class="mini-card">
         <h3 class="mini-head">Aunt Dot's console</h3>
@@ -298,28 +398,28 @@ const slides = [
         </div>
       </div>
     </div>
-    <a class="open-btn" href="prototype.html" target="_blank">Open the full prototype — 4 responders ↗</a>
+    <a class="open-btn" href="prototype.html" target="_blank">OPEN FULL PROTOTYPE — 4 RESPONDERS ↗</a>
     <p class="chart-caption">That link also switches between The Undertow, Farlight and Nightwell (a control case who was never stuck) — same mechanism, checked on more than one person.</p>
   `},
 
   // ---------- WHAT HAPPENED ----------
   { section:'happened', html:`
-    <h2 class="slide-title bangers">What happened</h2>
+    <h2 class="slide-title">What happened</h2>
     <p class="sub">Release 4.2 shipped two changes at once on 12 August — one of them exposed a bug that had been sitting in the scoring logic, unnoticed, for years.</p>
     <div class="grid2">
-      <div class="comic-panel"><span class="frame-no">1</span>
+      <div class="comic-panel"><span class="frame-no">01</span>
         <h4>Two changes, one release</h4>
         <p>Ranking was changed to weight nearby responders higher, and the ping timeout was cut from 90s to 60s. Both looked like safe, separate tweaks.</p>
       </div>
-      <div class="comic-panel"><span class="frame-no">2</span>
+      <div class="comic-panel"><span class="frame-no">02</span>
         <h4>An old bug, newly exposed</h4>
         <p>A missed ping was scored exactly like a deliberate decline in the routing code — and nothing let that score climb back on its own.</p>
       </div>
-      <div class="comic-panel"><span class="frame-no">3</span>
+      <div class="comic-panel"><span class="frame-no">03</span>
         <h4>The loop with no exit</h4>
         <p>Shorter timeout → more misses → more "refusals" → lower rank → fewer pings → no way back. A few responders got caught right after launch and never got out.</p>
       </div>
-      <div class="comic-panel"><span class="frame-no">4</span>
+      <div class="comic-panel"><span class="frame-no">04</span>
         <h4>The number that lied</h4>
         <p>Acceptance recovered from 54% to 73% in weeks — but that's work shifting to already-strong responders. Four people stayed stuck at the floor the whole time.</p>
       </div>
@@ -327,30 +427,30 @@ const slides = [
   `},
 
   { section:'happened', html:`
-    <h2 class="slide-title bangers">The compounding bug</h2>
+    <h2 class="slide-title">The compounding bug</h2>
     <p class="sub">A short timeout feeding a scoring rule with no exit — a few unlucky misses become permanent.</p>
     <div style="display:flex; justify-content:center;">
       <svg width="320" height="320" viewBox="0 0 260 260">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#d81e1e"/>
+            <path d="M0,0 L10,5 L0,10 z" fill="#ff5a5a"/>
           </marker>
         </defs>
-        <circle cx="130" cy="130" r="92" fill="none" stroke="#ffd400" stroke-width="20"/>
-        <path d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#d81e1e" stroke-width="4" stroke-dasharray="7,8" marker-end="url(#arrow)"/>
-        <g font-size="12" font-weight="800" fill="#0a1f44" text-anchor="middle" font-family="Archivo, sans-serif">
-          <rect x="86" y="8" width="88" height="36" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+        <circle cx="130" cy="130" r="92" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="18"/>
+        <path d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#ff5a5a" stroke-width="3" stroke-dasharray="7,8" marker-end="url(#arrow)"/>
+        <g font-size="11.5" font-weight="600" fill="#e8edf5" text-anchor="middle" font-family="Share Tech Mono, monospace">
+          <rect x="86" y="8" width="88" height="36" rx="3" fill="rgba(13,18,32,0.9)" stroke="#2dd4bf" stroke-width="1.5"/>
           <text x="130" y="31">Missed ping</text>
-          <rect x="176" y="88" width="82" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <rect x="176" y="88" width="82" height="42" rx="3" fill="rgba(13,18,32,0.9)" stroke="#2dd4bf" stroke-width="1.5"/>
           <text x="217" y="106">Scored as</text>
           <text x="217" y="121">a refusal</text>
-          <rect x="148" y="196" width="82" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <rect x="148" y="196" width="82" height="42" rx="3" fill="rgba(13,18,32,0.9)" stroke="#2dd4bf" stroke-width="1.5"/>
           <text x="189" y="214">Rank</text>
           <text x="189" y="229">drops</text>
-          <rect x="28" y="196" width="82" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <rect x="28" y="196" width="82" height="42" rx="3" fill="rgba(13,18,32,0.9)" stroke="#2dd4bf" stroke-width="1.5"/>
           <text x="69" y="214">Fewer</text>
           <text x="69" y="229">pings</text>
-          <rect x="0" y="88" width="88" height="42" rx="10" fill="#fff" stroke="#0a1f44" stroke-width="3"/>
+          <rect x="0" y="88" width="88" height="42" rx="3" fill="rgba(13,18,32,0.9)" stroke="#2dd4bf" stroke-width="1.5"/>
           <text x="44" y="106">No way</text>
           <text x="44" y="121">to recover</text>
         </g>
@@ -360,70 +460,70 @@ const slides = [
   `},
 
   { section:'happened', html:`
-    <h2 class="slide-title bangers">The number that lied</h2>
+    <h2 class="slide-title">The number that lied</h2>
     <p class="sub">Company-wide ping-level acceptance rate. Looks recovered. It isn't, for everyone.</p>
     <svg width="100%" height="200" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid meet">
-      <line x1="60" y1="20" x2="60" y2="150" stroke="#0a1f44" stroke-width="2"/>
-      <line x1="60" y1="150" x2="600" y2="150" stroke="#0a1f44" stroke-width="2"/>
-      <text x="26" y="24" font-size="12" fill="#5b6474" font-family="Archivo, sans-serif">100%</text>
-      <text x="38" y="154" font-size="12" fill="#5b6474" font-family="Archivo, sans-serif">0%</text>
-      <polyline points="100,51.9 340,105.6 580,63.4" fill="none" stroke="#ff6a00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="100" cy="51.9" r="7" fill="#0c9a53" stroke="#0a1f44" stroke-width="2"/>
-      <circle cx="340" cy="105.6" r="7" fill="#d81e1e" stroke="#0a1f44" stroke-width="2"/>
-      <circle cx="580" cy="63.4" r="7" fill="#0c9a53" stroke="#0a1f44" stroke-width="2"/>
-      <text x="100" y="38" text-anchor="middle" font-size="14" font-weight="800" fill="#0a1f44" font-family="Archivo, sans-serif">77%</text>
-      <text x="340" y="95" text-anchor="middle" font-size="14" font-weight="800" fill="#d81e1e" font-family="Archivo, sans-serif">54%</text>
-      <text x="580" y="52" text-anchor="middle" font-size="14" font-weight="800" fill="#0a1f44" font-family="Archivo, sans-serif">73%</text>
-      <text x="100" y="172" text-anchor="middle" font-size="12.5" fill="#5b6474" font-family="Archivo, sans-serif">Before 4.2</text>
-      <text x="340" y="172" text-anchor="middle" font-size="12.5" fill="#5b6474" font-family="Archivo, sans-serif">Week it shipped</text>
-      <text x="580" y="172" text-anchor="middle" font-size="12.5" fill="#5b6474" font-family="Archivo, sans-serif">Late August</text>
+      <line x1="60" y1="20" x2="60" y2="150" stroke="rgba(255,255,255,0.2)"/>
+      <line x1="60" y1="150" x2="600" y2="150" stroke="rgba(255,255,255,0.2)"/>
+      <text x="26" y="24" font-size="12" fill="#8696ae" font-family="Share Tech Mono, monospace">100%</text>
+      <text x="38" y="154" font-size="12" fill="#8696ae" font-family="Share Tech Mono, monospace">0%</text>
+      <polyline points="100,51.9 340,105.6 580,63.4" fill="none" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 5px rgba(45,212,191,0.6))"/>
+      <circle cx="100" cy="51.9" r="6" fill="#34d399" stroke="#0a0e1a" stroke-width="2"/>
+      <circle cx="340" cy="105.6" r="6" fill="#ff5a5a" stroke="#0a0e1a" stroke-width="2"/>
+      <circle cx="580" cy="63.4" r="6" fill="#34d399" stroke="#0a0e1a" stroke-width="2"/>
+      <text x="100" y="38" text-anchor="middle" font-size="14" font-weight="700" fill="#e8edf5" font-family="Share Tech Mono, monospace">77%</text>
+      <text x="340" y="95" text-anchor="middle" font-size="14" font-weight="700" fill="#ff5a5a" font-family="Share Tech Mono, monospace">54%</text>
+      <text x="580" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="#e8edf5" font-family="Share Tech Mono, monospace">73%</text>
+      <text x="100" y="172" text-anchor="middle" font-size="12.5" fill="#8696ae" font-family="Share Tech Mono, monospace">Before 4.2</text>
+      <text x="340" y="172" text-anchor="middle" font-size="12.5" fill="#8696ae" font-family="Share Tech Mono, monospace">Week it shipped</text>
+      <text x="580" y="172" text-anchor="middle" font-size="12.5" fill="#8696ae" font-family="Share Tech Mono, monospace">Late August</text>
     </svg>
     <p class="chart-caption">That "recovery" is the same work redistributed to already-strong responders — four people never came back up, confirmed against the full data pull.</p>
   `},
 
   // ---------- INVESTIGATION ----------
   { section:'investigation', html:`
-    <div class="module-head"><span class="issue-no">1</span><h2>Origin Story</h2></div>
-    <div class="finding-box"><span class="finding-tag">FINDING</span><br>No individually logged prompts. This session was onboarding — reading the company context and meeting Rook — run from the shared starter prompt rather than prompts of my own.</div>
-    <div class="prompt-tag">My prompt</div>
+    <div class="module-head"><span class="issue-no">01</span><h2>Origin Story</h2></div>
+    <div class="finding-box"><span class="finding-tag">INTEL</span><br>No individually logged prompts. This session was onboarding — reading the company context and meeting Rook — run from the shared starter prompt rather than prompts of my own.</div>
+    <div class="prompt-tag">MY PROMPT</div>
     <div class="speech-bubble empty-note">(none recorded — starter prompt only)</div>
   `},
   { section:'investigation', html:`
-    <div class="module-head"><span class="issue-no">2</span><h2>Super Hearing</h2></div>
-    <div class="finding-box"><span class="finding-tag">FINDING</span><br>4.2 bundled two routing changes — ranking weights pushed up proximity, and the ping wait was cut from 90s to 60s — with their effects not yet separated.</div>
-    <div class="prompt-tag">My prompt — the TL;DR / "so what"</div>
+    <div class="module-head"><span class="issue-no">02</span><h2>Super Hearing</h2></div>
+    <div class="finding-box"><span class="finding-tag">INTEL</span><br>4.2 bundled two routing changes — ranking weights pushed up proximity, and the ping wait was cut from 90s to 60s — with their effects not yet separated.</div>
+    <div class="prompt-tag">MY PROMPT — THE TL;DR / "SO WHAT"</div>
     <div class="speech-bubble">give me the TL;DR. What's the "so what" with 4.2?</div>
   `},
   { section:'investigation', html:`
-    <div class="module-head"><span class="issue-no">3</span><h2>Rewind</h2></div>
-    <div class="finding-box"><span class="finding-tag">FINDING</span><br>Customer interviews and all 147 support tickets independently described the same problem — tickets widened it to at least 6 affected responders, and confirmed handlers had already ruled out an availability-settings explanation.</div>
-    <div class="prompt-tag">My prompt</div>
+    <div class="module-head"><span class="issue-no">03</span><h2>Rewind</h2></div>
+    <div class="finding-box"><span class="finding-tag">INTEL</span><br>Customer interviews and all 147 support tickets independently described the same problem — tickets widened it to at least 6 affected responders, and confirmed handlers had already ruled out an availability-settings explanation.</div>
+    <div class="prompt-tag">MY PROMPT</div>
     <div class="speech-bubble">bank this.
 
 let's try a correlation exercise. Read every support ticket in Rook's database. Same treatment as before: grouping them into logical buckets to cover what they're unhappy about, who/how many many of the four raised each thing, which a corresponding quote to confirm this.</div>
   `},
   { section:'investigation', html:`
-    <div class="module-head"><span class="issue-no">4</span><h2>X-Ray Vision</h2></div>
-    <div class="finding-box"><span class="finding-tag">FINDING</span><br>Company-wide ping-level acceptance rate went 77% → 54% the week 4.2 shipped → recovered to 73% by late August — a recovery that's redistribution, not a fix, since four responders stayed on the floor.</div>
-    <div class="prompt-tag">My prompt</div>
+    <div class="module-head"><span class="issue-no">04</span><h2>X-Ray Vision</h2></div>
+    <div class="finding-box"><span class="finding-tag">INTEL</span><br>Company-wide ping-level acceptance rate went 77% → 54% the week 4.2 shipped → recovered to 73% by late August — a recovery that's redistribution, not a fix, since four responders stayed on the floor.</div>
+    <div class="prompt-tag">MY PROMPT</div>
     <div class="speech-bubble">what would pulling the company-wide acceptance rate before and after tell us?</div>
   `},
   { section:'investigation', html:`
-    <div class="module-head"><span class="issue-no">5</span><h2>Super Speed</h2></div>
-    <div class="finding-box"><span class="finding-tag">FINDING</span><br>Vesper's real handler is Aunt Dot, not Kip (who actually handles Meteor Mite and The Gale) — caught against the real database before it shipped in the brief.</div>
-    <div class="prompt-tag">My prompt</div>
+    <div class="module-head"><span class="issue-no">05</span><h2>Super Speed</h2></div>
+    <div class="finding-box"><span class="finding-tag">INTEL</span><br>Vesper's real handler is Aunt Dot, not Kip (who actually handles Meteor Mite and The Gale) — caught against the real database before it shipped in the brief.</div>
+    <div class="prompt-tag">MY PROMPT</div>
     <div class="speech-bubble">The note says this shouldn't just be a setting we quietly flip. Read the responder I picked from CLAUDE.md and use that name. Do not ask me which one. Walk me through what's still missing from the brief before this could actually get built.</div>
   `},
   { section:'investigation', html:`
-    <div class="module-head"><span class="issue-no">6</span><h2>Sidekicks</h2></div>
-    <div class="finding-box" style="background:var(--chip-bg); color:var(--muted);"><span class="finding-tag" style="background:var(--muted);">NOT STARTED</span><br>No prompts logged for this session yet — this report was built during Module 5.</div>
-    <div class="prompt-tag">My prompt</div>
+    <div class="module-head"><span class="issue-no">06</span><h2>Sidekicks</h2></div>
+    <div class="finding-box" style="background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.15); border-left-color:var(--muted); color:var(--muted);"><span class="finding-tag" style="color:var(--muted);">NOT STARTED</span><br>No prompts logged for this session yet — this report was built during Module 5.</div>
+    <div class="prompt-tag">MY PROMPT</div>
     <div class="speech-bubble empty-note">(none recorded yet)</div>
   `},
 
   // ---------- SKILL ----------
   { section:'skill', html:`
-    <h2 class="slide-title bangers">How this doesn't happen again</h2>
+    <h2 class="slide-title">How this doesn't happen again</h2>
     <p class="sub">A reusable skill, <code class="inline">review-checklist</code>, that checks any brief for the basics a bug like this slips through without.</p>
     <div class="skill-checks">
       <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Names who owns it</b>Someone decides — not just listed as a stakeholder.</span></div>
@@ -432,12 +532,12 @@ let's try a correlation exercise. Read every support ticket in Rook's database. 
       <div class="skill-check"><span class="tick">✓</span><span class="t"><b>Problem before the fix</b>No decision asked for before the problem's understood.</span></div>
     </div>
     <div class="skill-note">
-      Stress-tested against a deliberately bad, made-up brief with planted scope creep and an unnamed owner — caught both, cold. Then run against the project's own brief, which was missing a success condition and had its decisions ahead of the problem — both fixed as a direct result.
+      STRESS-TESTED against a deliberately bad, made-up brief with planted scope creep and an unnamed owner — caught both, cold. Then run against the project's own brief, which was missing a success condition and had its decisions ahead of the problem — both fixed as a direct result.
     </div>
   `},
   { section:'skill', html:`
     <div class="end-wrap">
-      <div class="bangers">THE END</div>
+      <div class="signoff">TRANSMISSION ENDS</div>
       <p class="sub" style="margin:16px auto 0; text-align:center;">Built from CLAUDE.md and the prompts.md files across all six modules. Rook Industries is a fictional teaching scenario, Product School's "Claude Code for PMs" course.</p>
     </div>
   `},
@@ -449,6 +549,18 @@ function sectionInfo(idx){
   const sec = slides[idx].section;
   const inSection = slides.map((s,i)=>i).filter(i=>slides[i].section===sec);
   return { sec, pos: inSection.indexOf(idx)+1, total: inSection.length, first: inSection[0], indices: inSection };
+}
+
+const FREQS = ['088.1 FM','091.7 FM','096.3 FM','099.5 FM','104.2 FM'];
+function runFreqTicker(){
+  const el = document.getElementById('freq-readout');
+  if (!el) return;
+  let i = 0;
+  const iv = setInterval(()=>{
+    i++;
+    if (i >= FREQS.length) { clearInterval(iv); return; }
+    el.textContent = FREQS[i];
+  }, 220);
 }
 
 function render(){
@@ -493,14 +605,14 @@ function render(){
   }
 
   document.getElementById('progress-fill').style.width = (((current+1)/slides.length)*100) + '%';
-  document.getElementById('slide-tag').textContent = 'Slide ' + (current+1) + ' of ' + slides.length;
+  document.getElementById('slide-tag').textContent = 'SLIDE ' + (current+1) + ' / ' + slides.length;
   document.getElementById('nav-count').textContent = (current+1) + ' / ' + slides.length;
   document.getElementById('prev-btn').disabled = current===0;
   document.getElementById('next-btn').disabled = current===slides.length-1;
 
-  // mount the live prototype widget if this slide has it
   protoAfter = false;
   renderProtoSlide();
+  runFreqTicker();
 }
 
 document.getElementById('prev-btn').onclick = ()=>{ if(current>0){ current--; render(); } };
