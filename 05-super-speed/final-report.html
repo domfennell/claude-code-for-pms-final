@@ -444,18 +444,13 @@ const slides = [
     <p class="sub">A short timeout feeding a scoring rule with no exit — a few unlucky misses become permanent.</p>
     <div style="display:flex; justify-content:center;">
       <svg width="320" height="320" viewBox="0 0 260 260">
-        <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#ff5a5a"/>
-          </marker>
-        </defs>
         <circle cx="130" cy="130" r="92" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="18"/>
-        <path id="loop-path" d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#ff5a5a" stroke-width="3" stroke-dasharray="7,8" marker-end="url(#arrow)"/>
-        <circle r="7.5" fill="#ff5a5a" style="filter:drop-shadow(0 0 7px #ff5a5a)">
-          <animateMotion dur="4.5s" repeatCount="indefinite" rotate="auto">
+        <path id="loop-path" d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#ff5a5a" stroke-width="3" stroke-dasharray="7,8"/>
+        <polygon points="11,0 -6,-6.5 -6,6.5" fill="#ff5a5a" style="filter:drop-shadow(0 0 7px #ff5a5a)">
+          <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
             <mpath href="#loop-path"/>
           </animateMotion>
-        </circle>
+        </polygon>
         <g font-size="11.5" font-weight="600" fill="#e8edf5" text-anchor="middle" font-family="Share Tech Mono, monospace">
           <rect x="86" y="8" width="88" height="36" rx="3" fill="rgba(13,18,32,0.9)" stroke="#2dd4bf" stroke-width="1.5"/>
           <text x="130" y="31">Missed ping</text>
