@@ -76,7 +76,7 @@ body{
   border: 1px solid var(--glass-border); border-radius: 6px;
   box-shadow: 0 0 50px rgba(45,212,191,0.12), inset 0 0 60px rgba(0,0,0,0.3);
   padding: 34px 36px; position:relative; overflow-y:auto; overflow-x:hidden;
-  display:flex; flex-direction:column; justify-content:center;
+  display:flex; flex-direction:column;
 }
 .hud-corner{ position:absolute; width:22px; height:22px; border: 2px solid var(--cyan); opacity:.75; pointer-events:none; }
 .hud-corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
@@ -84,6 +84,7 @@ body{
 .hud-corner.bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
 .hud-corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
 
+#slide-content{ margin: auto 0; width: 100%; } /* centers short slides; scrolls correctly from the top when content overflows */
 .subcounter{ position:absolute; top:16px; right:20px; font-family:"Share Tech Mono",monospace; font-size:11px; color: var(--cyan); background: rgba(45,212,191,0.08); border:1px solid var(--cyan-dim); border-radius:3px; padding:4px 11px; letter-spacing:.04em; }
 .section-dots{ position:absolute; top:46px; right:20px; display:flex; gap:7px; align-items:center; }
 .section-dots .dot{ width:9px; height:9px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.3); background: transparent; cursor:pointer; padding:0; transition: all .15s ease; }
@@ -434,9 +435,9 @@ const slides = [
     <div class="scope-note">ON PURPOSE, LEFT OUT HERE: sliders for the exact numbers (miss penalty, decay rate, floor) — out of scope for this view, so the decision stays on direction, not on tuning a formula.</div>
   `},
   { section:'fix', html:`
-    <h2 class="slide-title">See it in action</h2>
+    <h2 class="slide-title" style="margin-bottom:10px;">See it in action</h2>
+    <button class="toggle-btn" id="live-toggle" onclick="toggleProtoLive()" style="display:inline-block; margin:0 0 14px;">SHOW: AFTER THE FIX</button>
     <p class="sub">This is live — computed from Vesper's real ping history right here, not a picture of it. Click the button.</p>
-    <button class="toggle-btn" id="live-toggle" onclick="toggleProtoLive()">SHOW: AFTER THE FIX</button>
     <div class="proto-preview">
       <div class="mini-card">
         <h3 class="mini-head">Aunt Dot's console</h3>
@@ -490,7 +491,7 @@ const slides = [
     <h2 class="slide-title">The compounding bug</h2>
     <p class="sub">A short timeout feeding a scoring rule with no exit — a few unlucky misses become permanent.</p>
     <div style="display:flex; justify-content:center;">
-      <svg width="320" height="320" viewBox="0 0 260 260">
+      <svg width="258" height="258" viewBox="0 0 260 260">
         <circle cx="130" cy="130" r="92" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="18"/>
         <path id="loop-path" d="M 130 38 A 92 92 0 1 1 129.9 38" fill="none" stroke="#ff5a5a" stroke-width="3" stroke-dasharray="7,8"/>
         <polygon points="11,0 -6,-6.5 -6,6.5" fill="#ff5a5a" style="filter:drop-shadow(0 0 7px #ff5a5a)">
