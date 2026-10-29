@@ -620,6 +620,8 @@ function ensureAudioCtx(){
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
+let introNoise = null; // { src, filter, lfo, gain } — the looping scan-static, only while on the intro slide
+
 function toggleSound(){
   audioEnabled = !audioEnabled;
   const btn = document.getElementById('sound-toggle');
@@ -627,52 +629,55 @@ function toggleSound(){
   btn.classList.toggle('on', audioEnabled);
   if (audioEnabled) {
     ensureAudioCtx();
-    if (current === 0) playIntroSound();
+    if (current === 0) startIntroNoise();
+  } else {
+    stopIntroNoise();
   }
 }
-function playNoiseBurst(duration, peakGain, filterFreq, filterType, delay){
+
+// Continuous filtered white noise with a slow wobble, like scanning between stations — loops for as
+// long as you're on the intro slide, and nowhere else.
+function startIntroNoise(){
+  if (!audioEnabled || introNoise) return;
   const ctx = ensureAudioCtx();
-  const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const loopSeconds = 2;
+  const size = Math.floor(ctx.sampleRate * loopSeconds);
   const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource(); src.buffer = buffer;
-  const filter = ctx.createBiquadFilter(); filter.type = filterType || 'bandpass'; filter.frequency.value = filterFreq || 1500;
+
+  const src = ctx.createBufferSource();
+  src.buffer = buffer; src.loop = true;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 1700; filter.Q.value = 0.6;
+
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 0.12; // slow drift, like re-tuning
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 850;
+  lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+
   const gain = ctx.createGain();
-  const now = ctx.currentTime + (delay || 0);
-  gain.gain.setValueAtTime(peakGain, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.35);
+
   src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-  src.start(now); src.stop(now + duration);
+  src.start(); lfo.start();
+  introNoise = { src, filter, lfo, gain };
 }
-function playTick(freqHz, delay){
-  const ctx = ensureAudioCtx();
-  const osc = ctx.createOscillator(); const gain = ctx.createGain();
-  const now = ctx.currentTime + delay;
-  osc.type = 'square'; osc.frequency.setValueAtTime(freqHz, now);
-  gain.gain.setValueAtTime(0.05, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-  osc.connect(gain); gain.connect(ctx.destination);
-  osc.start(now); osc.stop(now + 0.07);
-}
-function playSquelch(delay){
-  playNoiseBurst(0.35, 0.16, 2500, 'highpass', delay);
-  const ctx = ensureAudioCtx();
-  const osc = ctx.createOscillator(); const gain = ctx.createGain();
-  const now = ctx.currentTime + delay;
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(1800, now);
-  osc.frequency.exponentialRampToValueAtTime(380, now + 0.3);
-  gain.gain.setValueAtTime(0.07, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-  osc.connect(gain); gain.connect(ctx.destination);
-  osc.start(now); osc.stop(now + 0.36);
-}
-function playIntroSound(){
-  if (!audioEnabled) return;
-  playNoiseBurst(1.1, 0.06, 3000, 'bandpass', 0); // scanning static, fades with the visual
-  for (let i = 0; i < 5; i++) playTick(600 + i * 80, 0.15 + i * 0.22); // ticks matching the frequency readout
-  playSquelch(1.7); // matches the squelch flash in the visuals
+
+function stopIntroNoise(){
+  if (!introNoise) return;
+  const { src, lfo, gain } = introNoise;
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(gain.gain.value, now);
+  gain.gain.linearRampToValueAtTime(0, now + 0.2);
+  src.stop(now + 0.25);
+  lfo.stop(now + 0.25);
+  introNoise = null;
 }
 
 let current = 0;
@@ -745,7 +750,7 @@ function render(){
   protoAfter = false;
   renderProtoSlide();
   runFreqTicker();
-  if (current === 0) playIntroSound();
+  if (current === 0) { if (audioEnabled) startIntroNoise(); } else { stopIntroNoise(); }
 }
 
 document.getElementById('prev-btn').onclick = ()=>{ if(current>0){ current--; render(); } };
