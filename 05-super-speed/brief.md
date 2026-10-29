@@ -4,7 +4,7 @@
 
 ## 1. Overview
 
-If someone misses a call, we score it the same as them saying "no." There's no way back. We want to fix that for good, not just patch it.
+If someone misses a call, we score it the same as them saying "no." There's no way back. We want to fix that for good, not just patch it. This also gives Dot a quiet heads-up when a ping goes out — something she asked for directly.
 
 ## 2. The problem, and why now
 
