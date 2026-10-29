@@ -15,6 +15,8 @@ prompt library built from your own questions.
 
 ### 1.
 
+Read CLAUDE.md and all six prompts.md files in this repo. For each module, pull one real finding or artifact and the exact prompt I wrote that produced it. Build a single HTML presentation that says plainly what happened with Release 4.2, backs it up with those findings and prompts, shows the fix through my prototype, and explains how my skill keeps it from happening again. Make it visually engaging, not just text. Save it as final-report.html, then save my work.
+
 ### 2.
 
 ### 3.
