@@ -150,6 +150,28 @@ p.sub{ color: var(--muted); font-size:14.5px; margin:0 0 20px; max-width:640px; 
 .pp-score{ font-size:11px; color: var(--muted); margin-top:6px; font-weight:600; font-family:"Share Tech Mono",monospace; }
 .pp-phone{ width:150px; margin:0 auto; border:4px solid rgba(255,255,255,0.25); border-radius:18px; background: rgba(0,0,0,0.4); padding:18px 10px 10px; position:relative; min-height:140px; }
 .pp-phone::before{ content:""; position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:6px; background: rgba(255,255,255,0.25); border-radius:5px; }
+.pp-phone-flash{ position:absolute; inset:-22px; border-radius:30px; background: radial-gradient(circle, rgba(45,212,191,0.55), transparent 70%); pointer-events:none; opacity:0; z-index:-1; }
+.pp-phone-flash.flash{ animation: glowFlash .7s ease; }
+@keyframes glowFlash{ 0%{ opacity:0; } 18%{ opacity:1; } 100%{ opacity:0; } }
+.pp-phone.buzz{ animation: phoneBuzz .5s ease; }
+@keyframes phoneBuzz{
+  0%,100%{ transform: translateX(0) rotate(0); }
+  10%{ transform: translateX(-3px) rotate(-1deg); }
+  20%{ transform: translateX(3px) rotate(1deg); }
+  30%{ transform: translateX(-3px) rotate(-1deg); }
+  40%{ transform: translateX(3px) rotate(1deg); }
+  50%{ transform: translateX(-2px); }
+  60%{ transform: translateX(2px); }
+  70%{ transform: translateX(-1px); }
+  80%{ transform: translateX(1px); }
+  90%{ transform: translateX(0); }
+}
+.pp-callout.show{ animation: notifDrop .45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes notifDrop{
+  0%{ transform: translateY(-16px) scale(.9); opacity:0; }
+  60%{ transform: translateY(2px) scale(1.03); opacity:1; }
+  100%{ transform: translateY(0) scale(1); opacity:1; }
+}
 .pp-callout{ background: rgba(255,176,32,0.12); border:1px solid var(--amber-dim); border-radius:4px; padding:8px; font-size:10.5px; font-weight:600; margin-bottom:7px; color:#f3deb0; display:none; }
 .pp-callout.show{ display:block; }
 .pp-quiet{ font-size:10.5px; color: var(--muted); text-align:center; margin-top:30px; font-family:"Share Tech Mono",monospace; }
@@ -340,6 +362,18 @@ function renderProtoSlide(){
   document.getElementById('live-callout').classList.toggle('show', protoAfter);
   document.getElementById('live-note').classList.toggle('show', protoAfter);
   document.getElementById('live-toggle').textContent = protoAfter ? "SHOW: TODAY'S RULE" : "SHOW: AFTER THE FIX";
+
+  // Replay the "incoming notification" buzz + flash every time we land on "after the fix"
+  if (protoAfter) {
+    const phone = document.getElementById('live-phone');
+    const flash = document.getElementById('live-flash');
+    [[phone,'buzz'],[flash,'flash']].forEach(([el,cls])=>{
+      if (!el) return;
+      el.classList.remove(cls);
+      void el.offsetWidth; // force reflow so the animation restarts
+      el.classList.add(cls);
+    });
+  }
 }
 function toggleProtoLive(){ protoAfter = !protoAfter; renderProtoSlide(); }
 
@@ -404,7 +438,8 @@ const slides = [
       </div>
       <div class="mini-card" style="display:flex; flex-direction:column; align-items:center;">
         <h3 class="mini-head" style="align-self:flex-start;">Vesper's phone</h3>
-        <div class="pp-phone">
+        <div class="pp-phone" id="live-phone">
+          <span class="pp-phone-flash" id="live-flash"></span>
           <div class="pp-quiet" id="live-quiet">No callouts today.<br>Nothing's changed in weeks.</div>
           <div class="pp-callout" id="live-callout">📍 New callout nearby — Old Town</div>
           <div class="pp-note" id="live-note">You're back to your normal call volume — a routing issue affected you, and it's fixed.</div>
