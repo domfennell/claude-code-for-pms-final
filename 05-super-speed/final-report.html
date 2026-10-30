@@ -215,7 +215,7 @@ footer{ text-align:center; color: var(--muted); font-size:11px; font-family:"Sha
 code.inline{ background: rgba(255,255,255,0.08); color: var(--cyan); padding:1px 6px; border-radius:3px; font-size:12px; font-family:"Share Tech Mono",monospace; }
 
 /* ---------- Intro: dispatch-radio tuning sequence ---------- */
-.intro-seq{ position:relative; min-height: 220px; }
+.intro-seq{ position:relative; min-height: 220px; overflow:hidden; } /* clips the squelch flash's painted extent here, so its huge scaled-up size never inflates the panel's scrollable area */
 .intro-static{
   position:absolute; inset:0; z-index:1;
   background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.08) 0px, transparent 1px, transparent 3px),
@@ -236,14 +236,17 @@ code.inline{ background: rgba(255,255,255,0.08); color: var(--cyan); padding:1px
 .squelch{
   position:absolute; left:50%; top:46%; width:4px; height:4px; z-index:3; pointer-events:none;
   background: radial-gradient(circle, #fff 0%, var(--cyan) 35%, transparent 70%);
-  transform: translate(-50%,-50%); opacity:0;
+  opacity:0;
   animation: squelchBurst .45s ease 1.7s forwards;
 }
+/* Scales via transform, not width/height — animating the literal box size left a huge
+   (invisible, but still laid-out) element behind due to the "forwards" fill-mode, which
+   was quietly inflating the panel's scrollable area even though nothing visible showed it. */
 @keyframes squelchBurst{
-  0%{ width:4px; height:4px; opacity:0; }
+  0%{ transform: translate(-50%,-50%) scale(1); opacity:0; }
   15%{ opacity:1; }
-  60%{ width:900px; height:900px; opacity:.5; }
-  100%{ width:1400px; height:1400px; opacity:0; }
+  60%{ transform: translate(-50%,-50%) scale(90); opacity:.5; }
+  100%{ transform: translate(-50%,-50%) scale(140); opacity:0; }
 }
 
 .intro-title-wrap{ position:relative; z-index:2; text-align:center; opacity:0; animation: titleIn .5s ease 1.85s forwards; }
@@ -819,6 +822,21 @@ document.addEventListener('keydown', (e)=>{
 });
 
 render();
+
+// Force a layout recalc once the custom fonts actually finish loading. The very first layout
+// pass can happen with a fallback font (taller line-heights), and some browsers don't fully
+// re-sync an overflow:auto element's scrollHeight after the fonts swap in and things shrink back
+// down — leaving a phantom scrollbar on content that visually fits.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    const panel = document.getElementById('panel');
+    if (!panel) return;
+    const prevDisplay = panel.style.display;
+    panel.style.display = 'none';
+    void panel.offsetHeight; // force synchronous reflow
+    panel.style.display = prevDisplay;
+  });
+}
 </script>
 </body>
 </html>
