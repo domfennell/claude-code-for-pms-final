@@ -235,3 +235,29 @@ gives room.
   documents), source-check (flag unsourced claims), entity-check
   (catch wrong person/role pairings against the database), and an
   edge-case-finder generalizing the Nightwell stress test.
+
+### Session findings (Module 6)
+
+- Lab 1 (schedule `review-checklist` to run unattended) was never
+  run this session — went straight to Lab 2, building
+  `05-super-speed/final-report.html`: a slide-deck presentation of
+  the whole 4.2 story, built only from real content already in the
+  repo (CLAUDE.md, the six prompts.md files, the brief, the
+  prototype).
+- Rejected recreating actual Simpsons branding (color, font,
+  opening sequence) for copyright reasons; pivoted to an original
+  dispatch-radio/action-film HUD aesthetic instead, with sound
+  synthesized live via the Web Audio API — no audio files, so the
+  report stays a single self-contained HTML file.
+- Found and fixed a genuinely subtle bug: an animated element
+  scaled up via `transform` to look huge — invisible at `opacity:0`,
+  held in place afterward by `animation-fill-mode: forwards` — was
+  silently inflating a scrollable ancestor's `scrollHeight`, with no
+  visible symptom in any bounding-box check. Fixed with
+  `overflow:hidden` on its own container, not by touching layout.
+  Diagnosing it required pulling live `scrollHeight`/`clientHeight`
+  numbers directly from the student's own browser console, since
+  visible-render checks in the preview tool couldn't reproduce it.
+- Still open: `06-sidekicks/scheduled-run-output.txt` is a stray
+  file — a verbatim copy of the class notes' illustrative example,
+  not a real run — sitting in the repo looking like genuine output.
