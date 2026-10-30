@@ -631,6 +631,9 @@ let introTimerId = null;  // the knob-twist scheduler's pending timeout
 let introNodes = null;    // { src, filter, gain } — the continuous noise bed
 let radioLineTimerId = null; // the operator-voice scheduler's pending timeout
 
+// Sound plays on the intro slide and the closing credits slide — the two "on the radio" bookends.
+function isAudioSlide(idx){ return idx === 0 || idx === slides.length - 1; }
+
 function toggleSound(){
   audioEnabled = !audioEnabled;
   const btn = document.getElementById('sound-toggle');
@@ -638,7 +641,7 @@ function toggleSound(){
   btn.classList.toggle('on', audioEnabled);
   if (audioEnabled) {
     ensureAudioCtx();
-    if (current === 0) startIntroNoise();
+    if (isAudioSlide(current)) startIntroNoise();
   } else {
     stopIntroNoise();
   }
@@ -812,7 +815,7 @@ function render(){
   protoAfter = false;
   renderProtoSlide();
   runFreqTicker();
-  if (current === 0) { if (audioEnabled) startIntroNoise(); } else { stopIntroNoise(); }
+  if (isAudioSlide(current)) { if (audioEnabled) startIntroNoise(); } else { stopIntroNoise(); }
 }
 
 document.getElementById('prev-btn').onclick = ()=>{ if(current>0){ current--; render(); } };
